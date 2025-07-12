@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive OS Revision Guide for GATE 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Academic Calm -->
+    <!-- Application Structure Plan: A single-page application with a fixed sidebar for primary navigation and a main content area that dynamically displays content for the selected topic. This dashboard-like structure allows non-linear exploration, which is ideal for revision, letting students jump between topics like 'Processes', 'Deadlock', and 'Memory Management' easily. Key interactions include tabbed views for comparing algorithms (e.g., CPU Scheduling), interactive diagrams for process flows (e.g., Process State Model), and a dynamic chart for simulating page replacement algorithms. This structure was chosen over a simple linear document to enhance user engagement, improve information digestibility, and provide active learning tools rather than just passive text consumption. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Overall OS Syllabus -> Goal: Inform -> Presentation: Landing page with key stats -> Interaction: Clickable nav links -> Justification: Provides an immediate, high-level overview. Library: HTML/CSS.
+        - Report Info: Process State Model, PCB, Context Switching, Process Creation/Termination, Scheduling Queues -> Goal: Organize/Inform -> Presentation: Interactive flowchart with styled divs, detailed accordion text blocks -> Interaction: Hover to show descriptions, expand/collapse sections -> Justification: Visualizes state transitions and explains underlying data structures and operations in detail. Library: HTML/CSS/JS.
+        - Report Info: User/Kernel Threads, Thread Models, Benefits of Multithreading -> Goal: Compare/Inform -> Presentation: Side-by-side cards, detailed accordion text blocks -> Interaction: Expand/collapse sections -> Justification: Clearly distinguishes thread types and explains their advantages and underlying implementations. Library: HTML/CSS/JS.
+        - Report Info: IPC Mechanisms, Sockets -> Goal: Inform -> Presentation: Grid of cards, detailed text -> Interaction: None (informational) -> Justification: Compares different communication methods and their use cases. Library: HTML/CSS.
+        - Report Info: Critical Section Problem, Mutex, Semaphore, Monitors, Common Synchronization Problems -> Goal: Inform -> Presentation: Text blocks, cards, detailed accordion text blocks -> Interaction: Expand/collapse sections -> Justification: Explains core synchronization challenges and their solutions. Library: HTML/CSS/JS.
+        - Report Info: Deadlock Conditions, Prevention, Avoidance, Detection, Recovery -> Goal: Inform -> Presentation: Grid of clickable cards, detailed accordion text blocks -> Interaction: Click to reveal analogy, expand/collapse sections -> Justification: Breaks down complex deadlock concepts into manageable, interactive parts. Library: HTML/CSS/JS.
+        - Report Info: CPU & Disk Scheduling Algorithms, Performance Criteria -> Goal: Compare/Inform -> Presentation: Tabbed interface with cards, detailed text -> Interaction: Click tabs to switch content -> Justification: Facilitates direct comparison of complex algorithm trade-offs and associated metrics. Library: HTML/CSS/JS.
+        - Report Info: Page Replacement Algorithms, Paging, Segmentation, TLB, Demand Paging, Page Fault Handling -> Goal: Demonstrate/Compare/Inform -> Presentation: Bar chart for page faults, detailed accordion text blocks -> Interaction: User can input a reference string to update the chart, expand/collapse sections -> Justification: Turns theoretical concepts into a hands-on simulation and provides deeper understanding of memory organization and virtual memory. Library: Chart.js (Canvas), HTML/CSS/JS.
+        - Report Info: File Attributes, Operations, Allocation Methods, Directory Structures, Access Methods -> Goal: Inform -> Presentation: Cards with method descriptions, detailed accordion text blocks -> Interaction: Expand/collapse sections -> Justification: Explains how files are stored, accessed, and organized. Library: HTML/CSS/JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #333;
+        }
+
+        .sidebar-link {
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link.active,
+        .sidebar-link:hover {
+            background-color: #eaddd7;
+            color: #1e1b18;
+            border-left-color: #d79272;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .tab-btn.active {
+            background-color: #d79272;
+            color: #ffffff;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 40vh;
+        }
+
+        .process-state-diagram .state {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .process-state-diagram .state:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        .deadlock-card {
+            transition: transform 0.3s ease;
+        }
+
+        .deadlock-card:hover {
+            transform: scale(1.05);
+        }
+
+        .accordion-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            padding: 0.75rem 1rem;
+            background-color: #f8f7f4;
+            color: #3d2c24;
+            font: semibold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .accordion-header:hover {
+            background-color: #f0e7e1;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            padding: 0 1rem;
+            /* Initial zero padding */
+        }
+
+        .accordion-content.open {
+            max-height: 1000px;
+            /* Large enough to accommodate content */
+            padding: 1rem;
+            /* Apply padding when open */
+            transition: max-height 0.5s ease-in, padding 0.5s ease-in;
+        }
+
+        .accordion-content p,
+        .accordion-content ul,
+        .accordion-content ol {
+            margin-bottom: 0.5rem;
+        }
+
+        .accordion-content li {
+            margin-left: 1rem;
+        }
+    </style>
+</head>
+
+<body class="flex min-h-screen">
+    <aside class="w-64 bg-[#f0e7e1] p-4 fixed h-full overflow-y-auto shadow-lg">
+        <h1 class="text-xl font-bold text-[#3d2c24] mb-6">OS Revision Guide</h1>
+        <nav id="sidebar-nav">
+            <a href="#overview" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">Overview</a>
+            <a href="#system-calls" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">System Calls</a>
+            <a href="#processes" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">Processes</a>
+            <a href="#threads" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">Threads</a>
+            <a href="#ipc" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">Inter-Process Comm.</a>
+            <a href="#synchronization"
+                class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">Synchronization</a>
+            <a href="#deadlock" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">Deadlock</a>
+            <a href="#scheduling" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">CPU & I/O
+                Scheduling</a>
+            <a href="#memory" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">Memory Management</a>
+            <a href="#filesystems" class="sidebar-link block py-2 px-4 rounded-lg mb-2 font-medium">File Systems</a>
+        </nav>
+    </aside>
+
+    <main class="ml-64 p-6 md:p-10 flex-1">
+        <div id="overview" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">Operating Systems for GATE 2026</h2>
+            <p class="text-lg text-gray-700 mb-6">Welcome to your interactive revision guide for the Operating Systems
+                section of the GATE 2026 CSE exam. This tool is designed to help you explore, understand, and synthesize
+                key concepts in a dynamic way. Use the sidebar to navigate through the core topics.</p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="font-bold text-xl text-[#d79272] mb-2">Subject Weightage</h3>
+                    <p class="text-4xl font-bold text-gray-800">~9 Marks</p>
+                    <p class="text-gray-600 mt-2">Operating Systems is a high-impact subject. A strong foundation here
+                        improves your score and enhances understanding of related topics like Databases and Networks.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="font-bold text-xl text-[#d79272] mb-2">Core Areas</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>Process & Thread Management</li>
+                        <li>Concurrency, Synchronization & Deadlock</li>
+                        <li>CPU & I/O Scheduling</li>
+                        <li>Memory & File System Management</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h3 class="font-bold text-xl text-[#d79272] mb-3">How to Use This Guide</h3>
+                <p class="text-gray-700">This application is structured around the major OS topics in the GATE syllabus.
+                    Each section provides a concise summary of the key concepts, often accompanied by interactive
+                    elements. For topics with multiple algorithms or methods, such as CPU Scheduling, use the tabs to
+                    compare their characteristics. For complex processes, like page replacement, try the interactive
+                    simulators to see the concepts in action. The goal is active revision, not passive reading.</p>
+            </div>
+        </div>
+
+        <div id="system-calls" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">System Calls</h2>
+            <p class="text-lg text-gray-700 mb-6">System calls are the fundamental interface between a user application
+                and the operating system's kernel. They provide a controlled way for programs to request privileged
+                services, such as hardware access or process creation, ensuring system stability and security. This
+                section breaks down the types of system calls and their crucial role.</p>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <div class="grid md:grid-cols-2 gap-6 text-center">
+                    <div>
+                        <p class="text-6xl mb-2">👤</p>
+                        <h4 class="font-bold text-lg">User Mode</h4>
+                        <p class="text-sm text-gray-600">Applications run with restricted privileges.</p>
+                    </div>
+                    <div>
+                        <p class="text-6xl mb-2">🛡️</p>
+                        <h4 class="font-bold text-lg">Kernel Mode</h4>
+                        <p class="text-sm text-gray-600">OS has full access to system resources.</p>
+                    </div>
+                </div>
+                <p class="text-center text-2xl font-bold my-4 text-[#d79272]">&rarr; System Call Transition &larr;</p>
+                <p class="text-gray-700">When a program needs a service, it triggers a system call, causing a mode
+                    switch. The CPU transitions from user mode to kernel mode, allowing the OS to execute the request
+                    securely. After completion, it switches back. This is the core principle of a protected operating
+                    system.</p>
+            </div>
+
+            <div class="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h4 class="font-bold text-lg text-[#3d2c24]">📂 File Management</h4>
+                    <p class="text-sm text-gray-600 mt-1">Create, delete, open, close, read, write files. Ex: `open()`,
+                        `read()`, `write()`, `close()`, `lseek()`.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h4 class="font-bold text-lg text-[#3d2c24]">⚙️ Process Control</h4>
+                    <p class="text-sm text-gray-600 mt-1">Create, terminate, execute, and manage processes. Ex:
+                        `fork()`, `exec()`, `exit()`, `wait()`, `abort()`.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h4 class="font-bold text-lg text-[#3d2c24]">🔌 Device Management</h4>
+                    <p class="text-sm text-gray-600 mt-1">Request and release devices, read, write. Ex: `ioctl()`,
+                        `read()`, `write()` (for devices), `mount()`, `unmount()`.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h4 class="font-bold text-lg text-[#3d2c24]">ℹ️ Information Maintenance</h4>
+                    <p class="text-sm text-gray-600 mt-1">Get time, date, system data, process attributes. Ex: `time()`,
+                        `getpid()`, `setuid()`, `getppid()`.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h4 class="font-bold text-lg text-[#3d2c24]">💬 Communication</h4>
+                    <p class="text-sm text-gray-600 mt-1">Create communication connections, send/receive messages. Ex:
+                        `pipe()`, `socket()`, `send()`, `recv()`, `shmget()`, `msgget()`.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h4 class="font-bold text-lg text-[#3d2c24]">🛡️ Protection</h4>
+                    <p class="text-sm text-gray-600 mt-1">Control access to resources. Ex: `chmod()`, `umask()`,
+                        `chown()`.</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>System Call Interface (API)</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Most operating systems provide a system call interface, often through a library
+                            (e.g., C library for Unix/Linux). This library provides wrapper functions for each system
+                            call. Applications link against this library, and when a wrapper function is called, it sets
+                            up the necessary parameters and triggers the actual system call instruction (e.g., `TRAP`
+                            instruction).</p>
+                        <p class="text-sm text-gray-600">This abstraction makes system calls easier for programmers to
+                            use, as they don't need to deal with the low-level details of mode switching and register
+                            manipulation directly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="processes" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">Processes</h2>
+            <p class="text-lg text-gray-700 mb-6">A process is a program in execution—an active entity with its own
+                resources. The OS manages the lifecycle of all processes, transitioning them between states to enable
+                multitasking. Explore the interactive diagram below to understand the journey of a process from creation
+                to termination.</p>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 process-state-diagram mb-6">
+                <h3 class="font-bold text-xl text-[#d79272] mb-4 text-center">Interactive Process State Model</h3>
+                <div class="relative flex flex-col items-center space-y-12">
+                    <div data-info="A process is being created. The OS has initialized its Process Control Block (PCB)."
+                        class="state bg-blue-100 text-blue-800 p-4 rounded-lg shadow-md w-48 text-center font-semibold">
+                        New</div>
+                    <div class="text-2xl font-bold text-gray-400">&darr;</div>
+                    <div data-info="The process is loaded into main memory and is waiting for the CPU."
+                        class="state bg-green-100 text-green-800 p-4 rounded-lg shadow-md w-48 text-center font-semibold">
+                        Ready</div>
+                    <div
+                        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center">
+                        <div class="w-48 text-center">
+                            <div class="text-2xl font-bold text-gray-400 transform -rotate-45">&searr;</div>
+                            <div data-info="The CPU is actively executing the process's instructions."
+                                class="state bg-yellow-100 text-yellow-800 p-4 rounded-lg shadow-md w-48 font-semibold">
+                                Running</div>
+                            <div class="text-2xl font-bold text-gray-400 transform rotate-45">&swarr;</div>
+                        </div>
+                        <div class="ml-24">
+                            <div class="text-2xl font-bold text-gray-400 transform rotate-45">&nearr;</div>
+                            <div data-info="The process is waiting for an event, like I/O completion."
+                                class="state bg-red-100 text-red-800 p-4 rounded-lg shadow-md w-48 text-center font-semibold">
+                                Waiting</div>
+                            <div class="text-2xl font-bold text-gray-400 transform -rotate-45">&nesearr;</div>
+                        </div>
+                    </div>
+                    <div class="pt-48">
+                        <div class="text-2xl font-bold text-gray-400">&darr;</div>
+                        <div data-info="The process has finished execution and its resources are being deallocated."
+                            class="state bg-gray-200 text-gray-800 p-4 rounded-lg shadow-md w-48 text-center font-semibold">
+                            Terminated</div>
+                    </div>
+                </div>
+                <div id="state-info-box"
+                    class="mt-8 p-4 bg-gray-50 rounded-lg border text-center text-gray-700 min-h-[50px]">Hover over a
+                    state to see its description.</div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Process Control Block (PCB)</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">The PCB is a data structure maintained by the operating system for each process.
+                            It contains all the information needed to manage a process, including:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Process State:</strong> New, Ready, Running, Waiting, Halted.</li>
+                            <li><strong>Program Counter:</strong> Address of the next instruction to be executed.</li>
+                            <li><strong>CPU Registers:</strong> Contents of all CPU registers (data registers, index
+                                registers, stack pointers, general-purpose registers, etc.).</li>
+                            <li><strong>CPU Scheduling Information:</strong> Process priority, pointers to scheduling
+                                queues, and other scheduling parameters.</li>
+                            <li><strong>Memory-Management Information:</strong> Base and limit registers, page tables,
+                                segment tables, and other memory management details.</li>
+                            <li><strong>Accounting Information:</strong> CPU used, real time used, time limits, process
+                                ID (PID), parent process ID (PPID), child process IDs.</li>
+                            <li><strong>I/O Status Information:</strong> List of I/O devices allocated to the process,
+                                list of open files, pending I/O requests.</li>
+                        </ul>
+                        <p class="mt-2">The PCB is crucial for context switching, allowing the OS to save and restore
+                            the state of a process.</p>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Context Switching</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Context switching is the process of saving the state of one process (or thread)
+                            so that it can be restored later, and restoring the state of a different process. This
+                            allows multiple processes to share a single CPU.</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>When it occurs:</strong> On time slice expiry (preemption), I/O request, system
+                                call completion, or interrupt handling.</li>
+                            <li><strong>Steps:</strong>
+                                <ol class="list-decimal list-inside ml-4">
+                                    <li>Save the context (CPU registers, program counter, stack pointer, etc.) of the
+                                        currently running process into its PCB.</li>
+                                    <li>Update the process state in the PCB (e.g., Running to Ready or Waiting).</li>
+                                    <li>Move the PCB to the appropriate queue (e.g., Ready Queue, Device Queue).</li>
+                                    <li>Select the next process to execute from the Ready Queue.</li>
+                                    <li>Load the context of the newly selected process from its PCB into the CPU
+                                        registers.</li>
+                                    <li>Update the process state of the newly selected process to Running.</li>
+                                </ol>
+                            </li>
+                            <li><strong>Overhead:</strong> Context switching is pure overhead; the system does no useful
+                                work while switching. Its frequency significantly impacts system performance. It
+                                involves CPU time for saving/loading registers and memory updates.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Process Creation and Termination</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <h4 class="font-semibold text-gray-800 mb-1">Process Creation (e.g., `fork()`, `exec()` in Unix)
+                        </h4>
+                        <ul class="list-disc list-inside text-sm space-y-1 mb-2">
+                            <li><strong>`fork()`:</strong> Creates a new process (child process) that is an almost
+                                identical copy of the calling process (parent process). The child process gets a copy of
+                                the parent's address space and registers. Both parent and child continue execution from
+                                the instruction after `fork()`.</li>
+                            <li><strong>`exec()`:</strong> Replaces the current process's address space with a new
+                                program. It loads a new program into the current process's memory and starts its
+                                execution from the beginning. The PID remains the same.</li>
+                            <li><strong>Relationship:</strong> Often, `fork()` is followed by `exec()` to create a new
+                                process that runs a different program.</li>
+                        </ul>
+                        <h4 class="font-semibold text-gray-800 mb-1">Process Termination (e.g., `exit()`, `abort()` in
+                            Unix)</h4>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>`exit()`:</strong> A process terminates normally, either by returning from its
+                                main function or by explicitly calling `exit()`. It releases all its resources.</li>
+                            <li><strong>`abort()`:</strong> A process terminates abnormally, usually due to an error or
+                                external intervention.</li>
+                            <li><strong>Zombie Process:</strong> A process that has terminated but whose parent has not
+                                yet called `wait()`. Its PCB remains in the system to allow the parent to collect its
+                                exit status.</li>
+                            <li><strong>Orphan Process:</strong> A child process whose parent has terminated without
+                                calling `wait()`. It is typically adopted by the `init` process (or systemd), which then
+                                calls `wait()` on it.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Process Scheduling Queues</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Operating systems maintain various queues to manage processes in different
+                            states:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Job Queue:</strong> Contains all processes in the system, typically waiting to
+                                be admitted to the ready queue.</li>
+                            <li><strong>Ready Queue:</strong> Contains processes that are residing in main memory, are
+                                ready and waiting to execute. Processes in this queue are waiting for the CPU.</li>
+                            <li><strong>Device Queues:</strong> Each device has its own queue. Processes waiting for a
+                                particular I/O device are placed in that device's queue.</li>
+                        </ul>
+                        <p class="mt-2">Processes migrate between these queues as their state changes (e.g., from Ready
+                            to Running, Running to Waiting, Waiting to Ready).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="threads" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">Threads</h2>
+            <p class="text-lg text-gray-700 mb-6">A thread is the basic unit of CPU utilization, a "lightweight process"
+                that allows an application to perform multiple tasks concurrently. Threads within the same process share
+                resources like memory, making them efficient but also introducing synchronization challenges. This
+                section compares the two main types of threads and highlights the benefits of multithreading.</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">User Threads</h3>
+                    <p class="text-center text-4xl mb-3">🧑‍💻</p>
+                    <p class="text-gray-700 mb-4">Managed by a user-level library without kernel support. The kernel is
+                        unaware of them.</p>
+                    <h4 class="font-semibold text-gray-800">Advantages:</h4>
+                    <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-3">
+                        <li>Fast to create and manage (no kernel mode switch).</li>
+                        <li>Can be implemented on an OS that does not support kernel threads.</li>
+                        <li>Scheduling is application-specific.</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-800">Disadvantages:</h4>
+                    <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                        <li>If one user thread performs a blocking system call, the entire process (and all its threads)
+                            blocks.</li>
+                        <li>Cannot take advantage of multiple CPU cores, as the kernel only sees one process.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">Kernel Threads</h3>
+                    <p class="text-center text-4xl mb-3">⚙️</p>
+                    <p class="text-gray-700 mb-4">Managed directly by the operating system kernel. The OS handles all
+                        thread operations.</p>
+                    <h4 class="font-semibold text-gray-800">Advantages:</h4>
+                    <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-3">
+                        <li>One thread blocking doesn't stop others; the kernel can schedule another thread from the
+                            same process.</li>
+                        <li>Can run in parallel on multi-core systems (true concurrency).</li>
+                        <li>Kernel routines can be multithreaded.</li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-800">Disadvantages:</h4>
+                    <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                        <li>Slower to create and manage (requires a system call and kernel mode switch).</li>
+                        <li>More overhead due to kernel involvement.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <h3 class="font-bold text-xl text-[#d79272] mb-3">Benefits of Multithreading</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-2">
+                    <li><strong>Responsiveness:</strong> A multithreaded application can remain responsive even if part
+                        of it is blocked or performing a long operation (e.g., a GUI application remains interactive
+                        while a background task runs).</li>
+                    <li><strong>Resource Sharing:</strong> Threads share the memory and resources of the process they
+                        belong to (code, data, files), reducing overhead compared to creating new processes.</li>
+                    <li><strong>Economy:</strong> Creating and managing threads is generally more economical (less
+                        overhead in terms of memory and time) than creating and managing processes, as threads share
+                        resources.</li>
+                    <li><strong>Scalability:</strong> On multi-core processors, multiple threads can run in parallel,
+                        significantly improving performance for tasks that can be divided into concurrent subtasks.</li>
+                </ul>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Multithreading Models</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Different models exist to map user threads to kernel threads:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Many-to-One Model:</strong> Many user-level threads map to one kernel thread.
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>Pros: Efficient (user-level management), low overhead.</li>
+                                    <li>Cons: If one thread blocks, all block; no true parallelism on multi-core.</li>
+                                    <li>Example: Green threads (older Java versions).</li>
+                                </ul>
+                            </li>
+                            <li><strong>One-to-One Model:</strong> Each user-level thread maps to a separate kernel
+                                thread.
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>Pros: True concurrency on multi-core; one thread blocking doesn't affect others.
+                                    </li>
+                                    <li>Cons: More overhead (kernel involvement); limits on number of threads.</li>
+                                    <li>Example: Linux, Windows.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Many-to-Many Model:</strong> A flexible model where many user-level threads are
+                                multiplexed to a smaller or equal number of kernel threads.
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>Pros: Combines benefits of both; allows true parallelism and avoids blocking
+                                        issues.</li>
+                                    <li>Cons: More complex to implement.</li>
+                                    <li>Example: Solaris (older versions).</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ipc" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">Inter-Process Communication (IPC)</h2>
+            <p class="text-lg text-gray-700 mb-6">IPC provides mechanisms for independent processes to communicate and
+                synchronize their actions. Choosing the right IPC method is a critical design decision that involves
+                trade-offs between speed, complexity, and security. Below is a comparison of common IPC mechanisms.</p>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col">
+                    <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">Shared Memory</h3>
+                    <p class="text-gray-700 flex-grow">Processes share a direct memory region. It's the fastest method
+                        as it avoids kernel mediation for data transfer once the memory is set up.</p>
+                    <div class="mt-4">
+                        <p class="font-semibold text-green-600">Pro: Extremely fast for data exchange.</p>
+                        <p class="font-semibold text-red-600">Con: Requires complex manual synchronization (e.g.,
+                            semaphores, mutexes) to prevent race conditions and ensure data consistency. No built-in
+                            protection.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col">
+                    <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">Pipes</h3>
+                    <p class="text-gray-700 flex-grow">A channel for communication, typically between related processes
+                        (parent-child). Data is written to one end and read from the other, acting as a FIFO queue.</p>
+                    <div class="mt-4">
+                        <p class="font-semibold text-green-600">Pro: Simple to use for unidirectional or half-duplex
+                            communication.</p>
+                        <p class="font-semibold text-red-600">Con: Often unidirectional (unnamed pipes) or limited to
+                            related processes. Data is copied through the kernel, adding overhead. Fixed size buffer.
+                        </p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col">
+                    <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">Message Queues</h3>
+                    <p class="text-gray-700 flex-grow">Processes communicate by sending and receiving messages from a
+                        kernel-managed queue. Messages are structured and can be prioritized. Processes are decoupled.
+                    </p>
+                    <div class="mt-4">
+                        <p class="font-semibold text-green-600">Pro: Asynchronous and flexible. Processes don't need to
+                            be related. Messages can have types/priorities.</p>
+                        <p class="font-semibold text-red-600">Con: Less efficient than shared memory for large data due
+                            to kernel overhead and data copying. Limited message size.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Sockets for Network IPC</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Sockets are a powerful IPC mechanism used for communication between processes on
+                            the same machine or across a network. They provide a standardized interface for network
+                            communication.</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Types:</strong>
+                                <ul class="list-circle list-inside ml-4">
+                                    <li><strong>Stream Sockets (TCP):</strong> Connection-oriented, reliable, ordered,
+                                        byte-stream.</li>
+                                    <li><strong>Datagram Sockets (UDP):</strong> Connectionless, unreliable, unordered,
+                                        message-oriented.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Use Cases:</strong> Client-server applications, web browsers, email clients,
+                                distributed systems.</li>
+                            <li><strong>Flexibility:</strong> Most flexible IPC, allowing communication over various
+                                network protocols.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="synchronization" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">Concurrency & Synchronization</h2>
+            <p class="text-lg text-gray-700 mb-6">When multiple threads or processes access shared resources, their
+                operations can interfere with each other, leading to data corruption (race conditions). Synchronization
+                mechanisms are essential tools to enforce orderly access and ensure data consistency. This section
+                introduces key concepts and tools, along with common synchronization problems.</p>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h3 class="font-bold text-xl text-[#d79272] mb-3">The Critical Section Problem</h3>
+                <p class="text-gray-700">A critical section is a piece of code that accesses a shared resource. To
+                    prevent race conditions, we must ensure that when one process is executing in its critical section,
+                    no other process is allowed to execute in its critical section. Any solution must satisfy three
+                    conditions:</p>
+                <ul class="list-disc list-inside text-gray-700 mt-2 space-y-1">
+                    <li><strong>Mutual Exclusion:</strong> If process P1 is executing in its critical section, then no
+                        other process can be executing in their critical sections.</li>
+                    <li><strong>Progress:</strong> If no process is executing in its critical section and some processes
+                        wish to enter their critical sections, then only those processes that are not executing in their
+                        remainder section can participate in deciding which will enter its critical section next, and
+                        this selection cannot be postponed indefinitely.</li>
+                    <li><strong>Bounded Waiting:</strong> There exists a bound on the number of times that other
+                        processes are allowed to enter their critical sections after a process has made a request to
+                        enter its critical section and before that request is granted.</li>
+                </ul>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="font-bold text-lg text-gray-800">Mutex Lock</h3>
+                    <p class="text-gray-600">A simple lock. A process acquires the lock before entering a critical
+                        section and releases it upon exiting. Only one process can hold the lock at a time, ensuring
+                        mutual exclusion. Often implemented with busy waiting (spinlock) or blocking.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="font-bold text-lg text-gray-800">Semaphore</h3>
+                    <p class="text-gray-600">A more general synchronization tool. It's an integer variable supporting
+                        two atomic operations: `wait()` (also known as `P` or `down`) which decrements value and blocks
+                        if non-positive, and `signal()` (also known as `V` or `up`) which increments value. Can be
+                        binary (like a mutex) or counting (to control access to a pool of N resources).</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Monitors</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Monitors are a high-level synchronization construct that encapsulate shared data
+                            and the procedures that operate on that data. They provide mutual exclusion implicitly,
+                            simplifying concurrent programming.</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Encapsulation:</strong> Shared data variables and the functions that access them
+                                are grouped together.</li>
+                            <li><strong>Mutual Exclusion:</strong> Only one process can be active within the monitor at
+                                any given time.</li>
+                            <li><strong>Condition Variables:</strong> Used for more complex synchronization (e.g.,
+                                waiting for a specific condition). `wait()` suspends a process, `signal()` resumes a
+                                suspended process.</li>
+                            <li><strong>Advantage:</strong> Easier to program correctly than semaphores, as mutual
+                                exclusion is handled automatically.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Common Synchronization Problems</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <h4 class="font-semibold text-gray-800 mb-1">Producer-Consumer Problem</h4>
+                        <p class="text-sm text-gray-600 mb-2">A producer generates data and puts it into a bounded
+                            buffer, while a consumer consumes data from the buffer. Synchronization is required to
+                            ensure the producer doesn't add to a full buffer and the consumer doesn't remove from an
+                            empty one. Typically solved using counting semaphores (for empty/full slots) and a binary
+                            semaphore/mutex (for mutual exclusion on the buffer itself).</p>
+                        <h4 class="font-semibold text-gray-800 mb-1">Readers-Writers Problem</h4>
+                        <p class="text-sm text-gray-600 mb-2">Multiple readers can read shared data concurrently, but
+                            only one writer can write at a time. Readers and writers cannot access the data
+                            simultaneously. Solutions prioritize either readers (allowing new readers to enter even if a
+                            writer is waiting) or writers (preventing new readers if a writer is waiting).</p>
+                        <h4 class="font-semibold text-gray-800 mb-1">Dining Philosophers Problem</h4>
+                        <p class="text-sm text-gray-600">Illustrates the problem of allocating multiple resources among
+                            multiple processes without deadlock or starvation. Five philosophers alternate between
+                            thinking and eating, needing two chopsticks (resources) to eat. A common solution involves
+                            using semaphores for chopsticks and ensuring that a philosopher picks up both chopsticks or
+                            none, or using an asymmetric solution.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="deadlock" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">Deadlock</h2>
+            <p class="text-lg text-gray-700 mb-6">A deadlock is a state where two or more processes are blocked forever,
+                each waiting for a resource held by another process in the set. For a deadlock to occur, four conditions
+                must hold simultaneously. Click on each card to see an analogy.</p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="deadlock-card bg-white p-6 rounded-xl shadow-md border border-gray-200 cursor-pointer"
+                    onclick="this.querySelector('.back').classList.toggle('hidden')">
+                    <div class="front">
+                        <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">Mutual Exclusion</h3>
+                        <p class="text-gray-700">At least one resource must be non-sharable; only one process can use it
+                            at a time.</p>
+                    </div>
+                    <div class="back hidden mt-2 pt-2 border-t border-gray-200">
+                        <p class="text-sm text-gray-600 italic">Analogy: Only one person can use a specific printer at a
+                            time.</p>
+                    </div>
+                </div>
+                <div class="deadlock-card bg-white p-6 rounded-xl shadow-md border border-gray-200 cursor-pointer"
+                    onclick="this.querySelector('.back').classList.toggle('hidden')">
+                    <div class="front">
+                        <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">Hold and Wait</h3>
+                        <p class="text-gray-700">A process holds at least one resource and is waiting for other
+                            resources held by other processes.</p>
+                    </div>
+                    <div class="back hidden mt-2 pt-2 border-t border-gray-200">
+                        <p class="text-sm text-gray-600 italic">Analogy: You're holding a scanner and waiting for the
+                            printer, which someone else is holding.</p>
+                    </div>
+                </div>
+                <div class="deadlock-card bg-white p-6 rounded-xl shadow-md border border-gray-200 cursor-pointer"
+                    onclick="this.querySelector('.back').classList.toggle('hidden')">
+                    <div class="front">
+                        <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">No Preemption</h3>
+                        <p class="text-gray-700">A resource can only be released voluntarily by the process holding it.
+                        </p>
+                    </div>
+                    <div class="back hidden mt-2 pt-2 border-t border-gray-200">
+                        <p class="text-sm text-gray-600 italic">Analogy: No one can forcibly take the printer away from
+                            the person using it.</p>
+                    </div>
+                </div>
+                <div class="deadlock-card bg-white p-6 rounded-xl shadow-md border border-gray-200 cursor-pointer"
+                    onclick="this.querySelector('.back').classList.toggle('hidden')">
+                    <div class="front">
+                        <h3 class="font-bold text-xl text-center text-[#d79272] mb-3">Circular Wait</h3>
+                        <p class="text-gray-700">A set of processes {P0, P1, ...} exists where P0 waits for a resource
+                            from P1, P1 from P2, and so on, with the last process waiting for a resource from P0.</p>
+                    </div>
+                    <div class="back hidden mt-2 pt-2 border-t border-gray-200">
+                        <p class="text-sm text-gray-600 italic">Analogy: You want the printer he has, and he wants the
+                            scanner you have.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Deadlock Prevention</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Deadlock prevention ensures that at least one of the four necessary conditions
+                            for deadlock cannot hold. This is done by imposing system-wide restrictions.</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Deny Mutual Exclusion:</strong> Not always possible (e.g., for non-sharable
+                                resources like printers).</li>
+                            <li><strong>Deny Hold and Wait:</strong>
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>Require process to request all its resources at once.</li>
+                                    <li>Require process to release all currently held resources before requesting new
+                                        ones.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Deny No Preemption:</strong> If a process holding resources requests another
+                                resource that cannot be immediately allocated, it must release all its currently held
+                                resources.</li>
+                            <li><strong>Deny Circular Wait:</strong> Impose a total ordering of all resource types and
+                                require each process to request resources in an increasing order of enumeration.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Deadlock Avoidance (Banker's Algorithm)</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Deadlock avoidance dynamically checks the resource-allocation state to ensure
+                            that there can be no circular-wait condition. It requires prior knowledge of the maximum
+                            number of resources each process may request.</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Safe State:</strong> A state is safe if there exists a sequence of processes
+                                such that for each process Pi, the resources that Pi can still request can be satisfied
+                                by currently available resources plus resources held by all Pj, where j < i. If the
+                                    system is in a safe state, no deadlocks can occur.</li>
+                            <li><strong>Banker's Algorithm:</strong> A well-known deadlock avoidance algorithm. It is
+                                used to determine if a state is safe. It requires:
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>`Available`: Vector of available resources.</li>
+                                    <li>`Max`: Matrix defining maximum demand of each process.</li>
+                                    <li>`Allocation`: Matrix defining resources currently allocated to each process.
+                                    </li>
+                                    <li>`Need`: Matrix defining remaining resource need for each process (`Max -
+                                        Allocation`).</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Deadlock Detection and Recovery</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">If deadlock prevention or avoidance is not used, deadlocks can occur. The system
+                            then needs mechanisms to detect them and recover.</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Detection:</strong>
+                                <ul class="list-circle list-inside ml-4">
+                                    <li><strong>Resource-Allocation Graph:</strong> A visual tool to detect cycles
+                                        (which indicate potential deadlock).</li>
+                                    <li><strong>Detection Algorithm:</strong> Similar to Banker's algorithm, but checks
+                                        for cycles in the current allocation state. Run periodically.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Recovery:</strong>
+                                <ul class="list-circle list-inside ml-4">
+                                    <li><strong>Process Termination:</strong>
+                                        <ul class="list-square list-inside ml-4">
+                                            <li>Terminate all deadlocked processes.</li>
+                                            <li>Terminate one process at a time until the deadlock cycle is broken.</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Resource Preemption:</strong> Take resources away from processes and
+                                        give them to others until the deadlock is broken. Involves selecting a victim,
+                                        rolling back the victim's state, and restarting it.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="scheduling" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">CPU & I/O Scheduling</h2>
+            <p class="text-lg text-gray-700 mb-6">Scheduling algorithms determine the order in which jobs or requests
+                are serviced. CPU scheduling decides which ready process gets the CPU, while disk scheduling optimizes
+                the order of I/O requests to minimize hardware movement. Use the tabs below to compare the trade-offs of
+                different common algorithms.</p>
+
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <div id="scheduling-tabs" class="mb-4 border-b border-gray-200">
+                    <nav class="flex space-x-4" aria-label="Tabs">
+                        <button data-target="cpu-scheduling"
+                            class="tab-btn scheduler-tab-btn px-3 py-2 font-medium text-sm rounded-t-lg">CPU
+                            Scheduling</button>
+                        <button data-target="disk-scheduling"
+                            class="tab-btn scheduler-tab-btn px-3 py-2 font-medium text-sm rounded-t-lg">Disk
+                            Scheduling</button>
+                    </nav>
+                </div>
+
+                <div id="cpu-scheduling" class="scheduler-content">
+                    <h3 class="font-bold text-xl text-[#d79272] mb-3">CPU Scheduling Algorithms</h3>
+                    <p class="text-gray-700 mb-4">CPU scheduling aims to maximize CPU utilization and provide fair
+                        allocation of CPU time to processes. Key criteria include:</p>
+                    <ul class="list-disc list-inside text-sm text-gray-600 mb-4">
+                        <li><strong>CPU Utilization:</strong> Keep the CPU as busy as possible.</li>
+                        <li><strong>Throughput:</strong> Number of processes completed per unit time.</li>
+                        <li><strong>Turnaround Time:</strong> Total time from submission to completion (including
+                            waiting, execution, I/O).</li>
+                        <li><strong>Waiting Time:</strong> Total time a process spends in the ready queue.</li>
+                        <li><strong>Response Time:</strong> Time from submission of a request until the first response
+                            is produced.</li>
+                    </ul>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">FCFS (First-Come, First-Served)</h4>
+                            <p class="text-sm text-gray-600">Simple non-preemptive algorithm. Processes are executed in
+                                the order they arrive. Can cause convoy effect (short processes get stuck behind long
+                                ones), leading to high average waiting time.</p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">SJF (Shortest Job First)</h4>
+                            <p class="text-sm text-gray-600">Optimal for average waiting time. Can be preemptive
+                                (Shortest Remaining Time First - SRTF) or non-preemptive. Requires knowing future burst
+                                times, which is generally impossible in practice. Can lead to starvation for long jobs.
+                            </p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">Priority Scheduling</h4>
+                            <p class="text-sm text-gray-600">Processes with higher priority are executed first. Can be
+                                preemptive or non-preemptive. A major problem is starvation (low-priority processes may
+                                never execute). Aging can be used to gradually increase the priority of long-waiting
+                                processes.</p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">Round Robin (RR)</h4>
+                            <p class="text-sm text-gray-600">Preemptive algorithm with a fixed time quantum. Each
+                                process gets a small unit of CPU time (time quantum). If it doesn't finish, it's
+                                preempted and added to the end of the ready queue. Fair, but high context switch
+                                overhead with a small quantum; large quantum degrades to FCFS.</p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">Multilevel Queue Scheduling</h4>
+                            <p class="text-sm text-gray-600">Partitions the ready queue into separate queues (e.g.,
+                                foreground/interactive, background/batch). Each queue has its own scheduling algorithm.
+                                Scheduling between queues can be fixed-priority or time-sliced.</p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">Multilevel Feedback Queue Scheduling</h4>
+                            <p class="text-sm text-gray-600">Allows processes to move between queues based on their CPU
+                                burst characteristics. Prevents starvation and can favor short jobs while also allowing
+                                long jobs to complete. Most general and complex.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="disk-scheduling" class="scheduler-content hidden">
+                    <h3 class="font-bold text-xl text-[#d79272] mb-3">Disk Scheduling Algorithms</h3>
+                    <p class="text-gray-700 mb-4">Disk scheduling aims to minimize disk head movement (seek time) and
+                        improve overall I/O throughput. Key components of disk access time:</p>
+                    <ul class="list-disc list-inside text-sm text-gray-600 mb-4">
+                        <li><strong>Seek Time:</strong> Time to move the disk arm to the desired cylinder. (Dominant
+                            factor)</li>
+                        <li><strong>Rotational Latency:</strong> Time for the desired sector to rotate under the disk
+                            head.</li>
+                        <li><strong>Transfer Time:</strong> Time to actually read or write the data.</li>
+                    </ul>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">FCFS (First-Come, First-Served)</h4>
+                            <p class="text-sm text-gray-600">Fair but inefficient. Services requests in the order they
+                                arrive. Can cause large, unnecessary disk head movements, leading to poor performance.
+                            </p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">SSTF (Shortest Seek Time First)</h4>
+                            <p class="text-sm text-gray-600">Services the request closest to the current head position.
+                                Improves performance by minimizing seek time locally but can cause starvation for
+                                requests far from the head.</p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">SCAN (Elevator Algorithm)</h4>
+                            <p class="text-sm text-gray-600">Disk arm starts at one end of the disk and moves towards
+                                the other end, servicing all requests in its path. When it reaches the other end, it
+                                reverses direction. Provides more uniform wait times than SSTF.</p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">C-SCAN (Circular SCAN)</h4>
+                            <p class="text-sm text-gray-600">Like SCAN, but on reaching one end, it immediately jumps to
+                                the other end without servicing requests on the return trip. It then services requests
+                                only in one direction. Provides even more uniform wait times and is often preferred for
+                                heavy load systems.</p>
+                        </div>
+                        <div class="border p-4 rounded-lg">
+                            <h4 class="font-bold">LOOK / C-LOOK</h4>
+                            <p class="text-sm text-gray-600">Optimized versions of SCAN/C-SCAN. The head only travels as
+                                far as the last request in its current direction, not all the way to the disk's physical
+                                end. It then reverses direction (LOOK) or jumps to the other end (C-LOOK) from that
+                                point. Reduces total seek time compared to full SCAN/C-SCAN.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="memory" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">Memory Management</h2>
+            <p class="text-lg text-gray-700 mb-6">Memory management handles the allocation of RAM to processes. Virtual
+                memory, a key technique, allows a program's logical address space to be much larger than physical
+                memory. When memory is full and a new page is needed, a page replacement algorithm decides which page to
+                evict. Simulate this process below.</p>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h3 class="font-bold text-xl text-[#d79272] mb-4">Interactive Page Replacement Simulator</h3>
+                <div class="grid md:grid-cols-2 gap-6 items-center">
+                    <div>
+                        <label for="page-frames" class="block text-sm font-medium text-gray-700">Number of Page
+                            Frames:</label>
+                        <input type="number" id="page-frames" value="3" min="1" max="10"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#d79272] focus:ring-[#d79272] sm:text-sm">
+
+                        <label for="reference-string" class="block text-sm font-medium text-gray-700 mt-4">Reference
+                            String (comma-separated):</label>
+                        <input type="text" id="reference-string" value="7,0,1,2,0,3,0,4,2,3,0,3,2"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#d79272] focus:ring-[#d79272] sm:text-sm">
+
+                        <button id="simulate-btn"
+                            class="mt-4 w-full bg-[#d79272] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#c57a5a] transition-colors">Simulate</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="page-fault-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Paging</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Paging is a memory management scheme that eliminates the need for contiguous
+                            allocation of physical memory. It divides logical memory into fixed-size blocks called
+                            <strong>pages</strong>, and physical memory into fixed-size blocks called
+                            <strong>frames</strong> (of the same size as pages).
+                        </p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Logical Address:</strong> Generated by the CPU, divided into a page number (p)
+                                and a page offset (d).</li>
+                            <li><strong>Physical Address:</strong> Determined by the page table, which maps page numbers
+                                to frame numbers. The page number is used as an index into the page table, and the
+                                corresponding frame number is combined with the page offset to form the physical
+                                address.</li>
+                            <li><strong>Page Table:</strong> A per-process data structure that translates logical
+                                addresses to physical addresses. Stored in main memory.</li>
+                            <li><strong>Benefits:</strong> Solves external fragmentation, allows for virtual memory and
+                                efficient memory utilization.</li>
+                            <li><strong>Drawbacks:</strong> Internal fragmentation (last page may not be full), overhead
+                                of page table (can be large), two memory accesses per data access (one for page table,
+                                one for data).</li>
+                        </ul>
+                        <div class="accordion-item mt-4 border border-gray-200 rounded-lg">
+                            <div class="accordion-header flex justify-between items-center bg-gray-50">
+                                <span>Translation Lookaside Buffer (TLB)</span>
+                                <span class="arrow">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p class="mb-2">The TLB is a small, fast hardware cache that stores recent page-to-frame
+                                    translations. It helps to reduce the effective memory access time by avoiding a
+                                    second memory access for page table lookup.</p>
+                                <ul class="list-disc list-inside text-sm space-y-1">
+                                    <li><strong>TLB Hit:</strong> If the page number is found in the TLB, the frame
+                                        number is retrieved quickly, and the physical address is formed.</li>
+                                    <li><strong>TLB Miss:</strong> If the page number is not in the TLB, a memory access
+                                        is required to retrieve the entry from the page table. The new translation is
+                                        then added to the TLB.</li>
+                                    <li><strong>Effective Access Time (EAT):</strong> EAT = (1 + $\alpha$) *
+                                        memory_access_time + (1 - $\alpha$) * TLB_hit_time, where $\alpha$ is the TLB
+                                        miss rate. (Simplified)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="accordion-item mt-4 border border-gray-200 rounded-lg">
+                            <div class="accordion-header flex justify-between items-center bg-gray-50">
+                                <span>Demand Paging and Page Fault Handling</span>
+                                <span class="arrow">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p class="mb-2"><strong>Demand Paging:</strong> A virtual memory technique where pages
+                                    are loaded into memory only when they are needed (demanded) during program
+                                    execution. This allows programs to run even if only a portion of them is in physical
+                                    memory.</p>
+                                <p class="mb-2"><strong>Page Fault:</strong> An event that occurs when a program tries
+                                    to access a page that is not currently in physical memory. The OS handles this by:
+                                </p>
+                                <ol class="list-decimal list-inside ml-4 text-sm space-y-1">
+                                    <li>Checking if the memory access was valid and if the page is on disk.</li>
+                                    <li>Finding a free frame in physical memory.</li>
+                                    <li>Scheduling a disk operation to read the desired page from disk into the free
+                                        frame.</li>
+                                    <li>Updating the page table entry for that page to reflect its new location and
+                                        valid bit.</li>
+                                    <li>Restarting the instruction that caused the page fault.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Segmentation</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Segmentation is a memory management scheme that supports user view of memory. A
+                            program is a collection of segments, where each segment is a logical unit (e.g., code, data,
+                            stack, subroutines, arrays).</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Logical Address:</strong> Divided into a segment number and an offset within the
+                                segment.</li>
+                            <li><strong>Segment Table:</strong> Maps two-dimensional logical addresses to
+                                one-dimensional physical addresses. Each entry in the segment table has a base address
+                                (starting physical address of the segment) and a limit (length of the segment).</li>
+                            <li><strong>Hardware Support:</strong> Requires a Segment Table Base Register (STBR)
+                                pointing to the segment table's location in memory, and a Segment Table Length Register
+                                (STLR) indicating the number of segments used by a program.</li>
+                            <li><strong>Benefits:</strong> Reflects user's view of memory, allows for protection and
+                                sharing of segments (e.g., shared code segment).</li>
+                            <li><strong>Drawbacks:</strong> Suffers from external fragmentation (variable-sized segments
+                                leave variable-sized holes).</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Page Replacement Algorithms (Theory)</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">When a page fault occurs and no free frames are available, the operating system
+                            must choose a page to replace (evict) from memory. The goal is to minimize page faults.</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>FIFO (First-In, First-Out):</strong> Replaces the page that has been in memory
+                                the longest. Simple to implement but can suffer from Belady's Anomaly (more frames lead
+                                to more page faults).</li>
+                            <li><strong>LRU (Least Recently Used):</strong> Replaces the page that has not been used for
+                                the longest period of time. Generally performs well but is expensive to implement
+                                (requires tracking usage timestamps or a stack).</li>
+                            <li><strong>Optimal Page Replacement (OPT):</strong> Replaces the page that will not be used
+                                for the longest period of time in the future. Guarantees the lowest page-fault rate but
+                                is impossible to implement in practice as it requires future knowledge. Used as a
+                                benchmark.</li>
+                            <li><strong>LFU (Least Frequently Used):</strong> Replaces the page with the smallest count
+                                of references.</li>
+                            <li><strong>MFU (Most Frequently Used):</strong> Replaces the page with the largest count of
+                                references.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="filesystems" class="content-section">
+            <h2 class="text-3xl font-bold text-[#3d2c24] mb-4">File Systems</h2>
+            <p class="text-lg text-gray-700 mb-6">A file system provides the structure for storing and organizing files
+                on a storage device. It manages how files are stored, accessed, and how disk space is allocated. The
+                choice of allocation method is a key design trade-off, balancing performance, space efficiency, and
+                flexibility. This section also covers various directory structures and file access methods.</p>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>File Attributes and Operations</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <h4 class="font-semibold text-gray-800 mb-1">File Attributes:</h4>
+                        <p class="text-sm text-gray-600 mb-2">Metadata associated with each file, stored in the
+                            directory entry:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Name:</strong> Symbolic name (human-readable).</li>
+                            <li><strong>Identifier:</strong> Unique tag (non-human-readable).</li>
+                            <li><strong>Type:</strong> For different file types (e.g., text, executable, library).</li>
+                            <li><strong>Location:</strong> Pointer to the device and location on disk.</li>
+                            <li><strong>Size:</strong> Current file size.</li>
+                            <li><strong>Protection:</strong> Access control information (read, write, execute
+                                permissions).</li>
+                            <li><strong>Time, Date, User Identification:</strong> Creation, last modification, last
+                                access times, owner ID.</li>
+                        </ul>
+                        <h4 class="font-semibold text-gray-800 mb-1 mt-3">File Operations:</h4>
+                        <p class="text-sm text-gray-600 mb-2">Common system calls for file manipulation:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Create:</strong> Creates a new file.</li>
+                            <li><strong>Delete:</strong> Removes a file.</li>
+                            <li><strong>Open:</strong> Opens an existing file, returning a file handle/descriptor.</li>
+                            <li><strong>Close:</strong> Closes an open file, releasing resources.</li>
+                            <li><strong>Read:</strong> Reads data from a file.</li>
+                            <li><strong>Write:</strong> Writes data to a file.</li>
+                            <li><strong>Reposition (lseek):</strong> Moves the current file pointer.</li>
+                            <li><strong>Truncate:</strong> Deletes contents of a file but keeps its attributes.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="accordion-item mt-4">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>File Access Methods</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">How data is read from or written to a file:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Sequential Access:</strong> Data is accessed in order, one record after another.
+                                Common for text files and tapes. (e.g., `read next`, `write next`, `reset`).</li>
+                            <li><strong>Direct (Random) Access:</strong> Records are accessed directly by their block
+                                number. Useful for databases where specific records need to be retrieved quickly. (e.g.,
+                                `read n`, `write n`, `position to n`).</li>
+                            <li><strong>Indexed Access:</strong> Built on top of sequential or direct access. An index
+                                (which is itself a file) contains pointers to various blocks. Searching the index allows
+                                quick access to records.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="font-bold text-lg text-center text-[#d79272] mb-2">Contiguous Allocation</h3>
+                    <p class="text-sm text-gray-600">Each file occupies a contiguous set of blocks on the disk. Simple
+                        to implement and provides excellent performance for sequential and direct access.</p>
+                    <p class="text-sm font-semibold text-red-600 mt-2">Problem: Suffers from external fragmentation
+                        (unused space between allocated blocks) and inflexible file sizes (difficult to grow files).</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="font-bold text-lg text-center text-[#d79272] mb-2">Linked Allocation</h3>
+                    <p class="text-sm text-gray-600">Each file is a linked list of disk blocks. Each block contains a
+                        pointer to the next block. Solves external fragmentation as blocks can be scattered anywhere on
+                        the disk.</p>
+                    <p class="text-sm font-semibold text-red-600 mt-2">Problem: Poor for random access (must traverse
+                        the list); pointer overhead in each block; reliability issues if a pointer is lost.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="font-bold text-lg text-center text-[#d79272] mb-2">Indexed Allocation</h3>
+                    <p class="text-sm text-gray-600">Each file has a dedicated index block (or blocks) which contains
+                        pointers to all the data blocks of the file. Supports direct access efficiently and solves
+                        external fragmentation.</p>
+                    <p class="text-sm font-semibold text-green-600 mt-2">Benefit: Most flexible and widely used method.
+                        Handles both sequential and random access well. Can use multi-level indexing for very large
+                        files.</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mt-6">
+                <div class="accordion-item">
+                    <div class="accordion-header flex justify-between items-center">
+                        <span>Directory Structures</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="mb-2">Directories organize files, providing a mapping between file names and their
+                            disk locations. Different logical structures exist:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>Single-Level Directory:</strong> All files are contained in the same directory.
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>Pros: Simple to implement.</li>
+                                    <li>Cons: Naming conflicts (unique names required), difficulty in grouping files for
+                                        multiple users or large numbers of files.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Two-Level Directory:</strong> Each user has their own separate directory.
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>Pros: Solves naming conflicts between users.</li>
+                                    <li>Cons: Still no grouping within a user's directory; difficult for users to share
+                                        files.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Tree-Structured Directories:</strong> The most common directory structure.
+                                Allows users to create their own subdirectories, forming a hierarchical tree.
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>Pros: Flexible organization, easy navigation (absolute and relative paths),
+                                        allows grouping of files.</li>
+                                    <li>Cons: No direct file sharing between different branches of the tree (requires
+                                        copying or linking).</li>
+                                </ul>
+                            </li>
+                            <li><strong>Acyclic-Graph Directories:</strong> Extends tree-structured directories by
+                                allowing sharing of files and directories among users through links (pointers) to files
+                                or subdirectories in other branches.
+                                <ul class="list-circle list-inside ml-4">
+                                    <li>Pros: Allows arbitrary sharing of files/directories.</li>
+                                    <li>Cons: Introduces challenges like dangling pointers (if the original file is
+                                        deleted) and cycle detection (to prevent infinite loops during traversal).</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('#sidebar-nav a');
+            const sections = document.querySelectorAll('.content-section');
+
+            function updateContent() {
+                const hash = window.location.hash || '#overview';
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === hash) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                sections.forEach(section => {
+                    if ('#' + section.id === hash) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    setTimeout(() => updateContent(), 0);
+                });
+            });
+
+            window.addEventListener('hashchange', updateContent);
+            updateContent();
+
+            const processStates = document.querySelectorAll('.process-state-diagram .state');
+            const infoBox = document.getElementById('state-info-box');
+            const originalInfoText = infoBox.textContent;
+
+            processStates.forEach(state => {
+                state.addEventListener('mouseover', () => {
+                    infoBox.textContent = state.dataset.info;
+                });
+                state.addEventListener('mouseout', () => {
+                    infoBox.textContent = originalInfoText;
+                });
+            });
+
+            const schedulerTabBtns = document.querySelectorAll('.scheduler-tab-btn');
+            const schedulerContents = document.querySelectorAll('.scheduler-content');
+
+            schedulerTabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    schedulerTabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    schedulerContents.forEach(content => {
+                        if (content.id === btn.dataset.target) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            schedulerTabBtns[0].click();
+
+            let pageFaultChart = null;
+            const simulateBtn = document.getElementById('simulate-btn');
+
+            function runFifo(refString, frames) {
+                let pageFaults = 0;
+                let memory = [];
+                for (const page of refString) {
+                    if (!memory.includes(page)) {
+                        pageFaults++;
+                        if (memory.length < frames) {
+                            memory.push(page);
+                        } else {
+                            memory.shift();
+                            memory.push(page);
+                        }
+                    }
+                }
+                return pageFaults;
+            }
+
+            function runLru(refString, frames) {
+                let pageFaults = 0;
+                let memory = [];
+                let lastUsed = new Map(); // Stores page -> last used index
+                for (let i = 0; i < refString.length; i++) {
+                    const page = refString[i];
+                    if (!memory.includes(page)) {
+                        pageFaults++;
+                        if (memory.length < frames) {
+                            memory.push(page);
+                        } else {
+                            // Find LRU page
+                            let lruPage = -1;
+                            let minLastUsed = Infinity;
+                            for (const p of memory) {
+                                if (lastUsed.get(p) < minLastUsed) {
+                                    minLastUsed = lastUsed.get(p);
+                                    lruPage = p;
+                                }
+                            }
+                            memory = memory.filter(p => p !== lruPage);
+                            memory.push(page);
+                        }
+                    }
+                    lastUsed.set(page, i); // Update last used time
+                }
+                return pageFaults;
+            }
+
+            function runOptimal(refString, frames) {
+                let pageFaults = 0;
+                let memory = [];
+                for (let i = 0; i < refString.length; i++) {
+                    const page = refString[i];
+                    if (!memory.includes(page)) {
+                        pageFaults++;
+                        if (memory.length < frames) {
+                            memory.push(page);
+                        } else {
+                            let futureUses = {};
+                            memory.forEach(p => {
+                                futureUses[p] = Infinity; // Default to not used in future
+                            });
+                            for (let j = i + 1; j < refString.length; j++) {
+                                if (memory.includes(refString[j]) && futureUses[refString[j]] === Infinity) {
+                                    futureUses[refString[j]] = j; // First future occurrence
+                                }
+                            }
+                            let pageToReplace = -1;
+                            let farthest = -1;
+                            for (const p of memory) {
+                                if (futureUses[p] > farthest) {
+                                    farthest = futureUses[p];
+                                    pageToReplace = p;
+                                }
+                            }
+                            memory = memory.filter(p => p !== pageToReplace);
+                            memory.push(page);
+                        }
+                    }
+                }
+                return pageFaults;
+            }
+
+
+            function updateChart() {
+                const frames = parseInt(document.getElementById('page-frames').value);
+                const refStringRaw = document.getElementById('reference-string').value;
+                const refString = refStringRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+
+                if (refString.length === 0) return;
+
+                const fifoFaults = runFifo(refString.slice(), frames);
+                const lruFaults = runLru(refString.slice(), frames);
+                const optimalFaults = runOptimal(refString.slice(), frames);
+
+                const ctx = document.getElementById('page-fault-chart').getContext('2d');
+                if (pageFaultChart) {
+                    pageFaultChart.destroy();
+                }
+                pageFaultChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['FIFO', 'LRU', 'Optimal'],
+                        datasets: [{
+                            label: 'Page Faults',
+                            data: [fifoFaults, lruFaults, optimalFaults],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.5)',
+                                'rgba(54, 162, 235, 0.5)',
+                                'rgba(75, 192, 192, 0.5)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(75, 192, 192, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: 'Page Faults by Algorithm',
+                                font: { size: 16 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 }
+                            }
+                        }
+                    }
+                });
+            }
+
+            simulateBtn.addEventListener('click', updateChart);
+            updateChart();
+
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.nextElementSibling;
+                    const arrow = header.querySelector('.arrow');
+                    if (content.classList.contains('open')) {
+                        content.classList.remove('open');
+                        arrow.textContent = '▼';
+                    } else {
+                        content.classList.add('open');
+                        arrow.textContent = '▲';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
