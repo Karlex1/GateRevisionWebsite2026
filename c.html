@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive C Syllabus Revision 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Stone, Slate, Teal) -->
+    <!-- Application Structure Plan: A thematic, tab-based single-page application. The structure is designed to guide the user from a high-level overview to the specific details in a non-linear way, enhancing usability. It consists of five main sections: 1) Overview: A landing page summarizing the report's purpose. 2) Core Principles: A visual breakdown of the two main drivers (C23 & NEP 2020). 3) Syllabus Explorer: The core interactive feature, allowing users to compare current vs. proposed topics from the report's Table 3, now with a 'Deep Dive' section. 4) Implementation Guide: An accordion-style view of recommendations. 5) Quiz: An interactive multiple-choice quiz to test understanding, now based on GATE PYQ style. This structure was chosen to deconstruct the dense report into digestible, user-driven modules, making the information more accessible and engaging than a linear document, and adding an assessment component. -->
+    <!-- Visualization & Content Choices: 1) Report Info: Key drivers (C23, NEP). Goal: Compare & Inform. Viz: Two-column layout with interactive cards. Interaction: Hover/click to see details. Justification: Visually separates and clarifies the two foundational pillars of the revision. Method: HTML/CSS/JS. 2) Report Info: Proposed syllabus changes (Table 3). Goal: Organize & Compare. Viz: Two-panel interactive list/details view. Interaction: Click a topic to see detailed comparisons and a 'Deep Dive'. Justification: Transforms a static table into a dynamic, user-controlled explorer, which is the most effective way to handle detailed comparative data, now with expanded content. Method: HTML/CSS/JS. 3) Report Info: Pedagogical focus shift. Goal: Inform/Compare. Viz: Donut Chart. Interaction: Static visual. Justification: Provides a quick, impactful visual summary of the shift from theory to practice. Library: Chart.js. 4) Report Info: Implementation recommendations. Goal: Organize. Viz: Accordion. Interaction: Click to expand/collapse. Justification: Condenses supplementary information into a clean, on-demand format. Method: HTML/CSS/JS. 5) Report Info: Understanding of changes. Goal: Assess. Viz: Multiple-choice quiz. Interaction: Select answer, get feedback, next question, final score. Justification: Provides an active learning component, reinforcing key concepts from the syllabus revision, now with a focus on GATE-style questions for deeper understanding and exam preparation. Method: HTML/CSS/JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-button { transition: all 0.3s ease; }
+        .nav-button.active { background-color: #0d9488; color: white; }
+        .nav-button:not(.active):hover { background-color: #f1f5f9; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .chart-container { position: relative; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .syllabus-item.active { background-color: #ccfbf1; border-left-color: #0d9488; }
+        .syll-tag {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            margin-right: 0.5rem;
+        }
+        .tag-c23 { background-color: #e0f2fe; color: #0284c7; }
+        .tag-nep { background-color: #fef3c7; color: #d97706; }
+        .tag-industry { background-color: #e0e7ff; color: #4338ca; }
+        .quiz-option {
+            transition: all 0.2s ease;
+        }
+        .quiz-option:hover {
+            background-color: #f0f9ff;
+            border-color: #0d9488;
+        }
+        .quiz-option.selected {
+            background-color: #bfdbfe;
+            border-color: #2563eb;
+        }
+        .quiz-option.correct {
+            background-color: #d1fae5;
+            border-color: #10b981;
+        }
+        .quiz-option.incorrect {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="min-h-screen flex flex-col">
+        <header class="bg-white shadow-md sticky top-0 z-50">
+            <div class="container mx-auto px-4 py-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-teal-700 text-center">Interactive C Language Syllabus Revision 2026</h1>
+                <p class="text-center text-slate-500 mt-1">An interactive guide to the proposed changes for the C programming curriculum.</p>
+            </div>
+            <nav class="bg-white border-b border-slate-200">
+                <div class="container mx-auto flex justify-center items-center p-2 space-x-2 md:space-x-4">
+                    <button class="nav-button active text-sm md:text-base font-semibold px-4 py-2 rounded-full" data-target="overview">Overview</button>
+                    <button class="nav-button text-sm md:text-base font-semibold px-4 py-2 rounded-full" data-target="principles">Core Principles</button>
+                    <button class="nav-button text-sm md:text-base font-semibold px-4 py-2 rounded-full" data-target="explorer">Syllabus Explorer</button>
+                    <button class="nav-button text-sm md:text-base font-semibold px-4 py-2 rounded-full" data-target="implementation">Implementation Guide</button>
+                    <button class="nav-button text-sm md:text-base font-semibold px-4 py-2 rounded-full" data-target="quiz">Quiz</button>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow container mx-auto p-4 md:p-8">
+            <div id="overview" class="content-section active">
+                <div class="text-center bg-white p-8 rounded-lg shadow-sm">
+                    <h2 class="text-3xl font-bold text-teal-600 mb-4">Modernizing C Education for 2026</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600 leading-relaxed">
+                        This interactive application summarizes the proposed revisions for the C language syllabus for the 2026 academic year. The goal is to create a modern, practical, and forward-looking curriculum by aligning with two major forces: the new **C23 Standard** and the pedagogical vision of the **National Education Policy (NEP) 2020**. This guide will help you understand the rationale, explore the specific topic changes, and see the path to implementation.
+                    </p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6 mt-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-sky-500">
+                        <h3 class="text-xl font-bold text-sky-700 mb-2">Align with C23 Standard</h3>
+                        <p class="text-slate-600">Integrate modern features and best practices from the latest C standard (ISO/IEC 9899:2024), ensuring students learn current and relevant C programming.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-amber-500">
+                        <h3 class="text-xl font-bold text-amber-700 mb-2">Embrace NEP 2020</h3>
+                        <p class="text-slate-600">Shift towards competency-based learning, focusing on problem-solving, critical thinking, and practical application over rote memorization.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-indigo-500">
+                        <h3 class="text-xl font-bold text-indigo-700 mb-2">Enhance Industry Relevance</h3>
+                        <p class="text-slate-600">Equip students with the foundational skills and debugging techniques necessary for advanced studies and careers in systems programming and embedded systems.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="principles" class="content-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-teal-600">The Two Pillars of Revision</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600 mt-2">The syllabus revision is built on two key foundations: the technical evolution of the C language itself (C23) and a modern pedagogical philosophy (NEP 2020). Understanding these principles is key to appreciating the proposed changes.</p>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="text-2xl font-bold text-sky-700 mb-4 text-center">Driver 1: The C23 Standard</h3>
+                        <p class="text-center text-slate-600 mb-6">Published in October 2024, C23 modernizes the language by adding new features for clarity and safety, while removing obsolete constructs.</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-sky-50 rounded-lg text-center">
+                                <p class="font-mono font-bold text-sky-800">_Bool, true, false</p>
+                                <p class="text-sm text-sky-600">Native boolean types.</p>
+                            </div>
+                            <div class="p-4 bg-sky-50 rounded-lg text-center">
+                                <p class="font-mono font-bold text-sky-800">nullptr</p>
+                                <p class="text-sm text-sky-600">Type-safe null pointer.</p>
+                            </div>
+                            <div class="p-4 bg-sky-50 rounded-lg text-center">
+                                <p class="font-mono font-bold text-sky-800">#embed</p>
+                                <p class="text-sm text-sky-600">Include binary resources.</p>
+                            </div>
+                            <div class="p-4 bg-sky-50 rounded-lg text-center">
+                                <p class="font-mono font-bold text-sky-800">[[deprecated]]</p>
+                                <p class="text-sm text-sky-600">Standardized attributes.</p>
+                            </div>
+                            <div class="p-4 bg-sky-50 rounded-lg text-center">
+                                <p class="font-mono font-bold text-sky-800">auto</p>
+                                <p class="text-sm text-sky-600">Type inference for objects.</p>
+                            </div>
+                            <div class="p-4 bg-sky-50 rounded-lg text-center">
+                                <p class="font-mono font-bold text-red-800">Removed K&R</p>
+                                <p class="text-sm text-red-600">Old function definitions gone.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="text-2xl font-bold text-amber-700 mb-4 text-center">Driver 2: NEP 2020 Principles</h3>
+                         <p class="text-center text-slate-600 mb-6">India's National Education Policy 2020 mandates a shift from content-heavy curriculum to one that fosters higher-order skills.</p>
+                         <div class="chart-container">
+                            <canvas id="nepChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="explorer" class="content-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-teal-600">Interactive Syllabus Explorer</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600 mt-2">Select a topic from the list on the left to see a detailed comparison of the current syllabus, the proposed revisions, the rationale, and a deeper dive into the specific changes.</p>
+                </div>
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="md:w-1/3 lg:w-1/4">
+                        <div id="syllabus-topics-list" class="bg-white rounded-lg shadow-sm p-4 h-full">
+                            <h3 class="font-bold text-lg mb-4 text-slate-700">Syllabus Modules</h3>
+                            <ul class="space-y-1"></ul>
+                        </div>
+                    </div>
+                    <div class="md:w-2/3 lg:w-3/4">
+                        <div id="syllabus-details" class="bg-white rounded-lg shadow-sm p-6 min-h-[50vh]">
+                            <p class="text-center text-slate-500 pt-16">Select a topic to view details.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="implementation" class="content-section">
+                 <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-teal-600">Guide to Implementation</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600 mt-2">Successfully rolling out the revised syllabus requires a thoughtful approach to teaching, faculty development, and student assessment. Here are the key recommendations.</p>
+                </div>
+                <div id="accordion-container" class="max-w-4xl mx-auto space-y-4">
+                    <div class="bg-white rounded-lg shadow-sm">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left p-4 font-bold text-lg text-slate-700 hover:bg-slate-50">
+                            <span>Pedagogical Approaches</span>
+                            <span class="accordion-icon transform transition-transform">▼</span>
+                        </button>
+                        <div class="accordion-content hidden p-4 border-t border-slate-200">
+                            <ul class="list-disc list-inside space-y-2 text-slate-600">
+                                <li><strong>Hands-On Learning:</strong> Allocate significant time for practical lab sessions and extensive coding exercises to write, compile, and debug programs.</li>
+                                <li><strong>Project-Based Learning (PBL):</strong> Implement small-to-medium projects that solve realistic problems, fostering creativity and critical thinking.</li>
+                                <li><strong>Active Learning Strategies:</strong> Use in-class quizzes, peer programming, and live coding challenges to enhance engagement, especially for complex topics like pointers.</li>
+                                <li><strong>Leverage Technology:</strong> Utilize e-learning platforms and virtual labs to provide flexible learning and access to tools supporting C23 features.</li>
+                            </ul>
+                        </div>
+                    </div>
+                     <div class="bg-white rounded-lg shadow-sm">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left p-4 font-bold text-lg text-slate-700 hover:bg-slate-50">
+                            <span>Faculty Training & Resources</span>
+                            <span class="accordion-icon transform transition-transform">▼</span>
+                        </button>
+                        <div class="accordion-content hidden p-4 border-t border-slate-200">
+                           <ul class="list-disc list-inside space-y-2 text-slate-600">
+                                <li><strong>C23 Standard Training:</strong> Conduct mandatory training for faculty on new C23 features, deprecated elements, and modern teaching strategies.</li>
+                                <li><strong>Curriculum Workshops:</strong> Organize workshops to help faculty redesign course materials, lab exercises, and assessment tools.</li>
+                                <li><strong>Update Resources:</strong> Encourage adoption of modern textbooks and online materials that cover C23 and emphasize practical application.</li>
+                            </ul>
+                        </div>
+                    </div>
+                     <div class="bg-white rounded-lg shadow-sm">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left p-4 font-bold text-lg text-slate-700 hover:bg-slate-50">
+                            <span>Assessment Strategies</span>
+                            <span class="accordion-icon transform transition-transform">▼</span>
+                        </button>
+                        <div class="accordion-content hidden p-4 border-t border-slate-200">
+                            <ul class="list-disc list-inside space-y-2 text-slate-600">
+                                <li><strong>Focus on Application:</strong> Shift assessment from fact recall to evaluating students' ability to apply concepts, analyze problems, and debug code.</li>
+                                <li><strong>Practical Examinations:</strong> Increase the weightage and complexity of practical coding exams, including real-world problem-solving scenarios.</li>
+                                <li><strong>Project-Based Evaluation:</strong> Make project work a significant component of assessment, evaluating design, code quality, and documentation.</li>
+                                <li><strong>Promote Higher Order Thinking:</strong> Design exam questions that require analysis, synthesis, and evaluation, moving beyond basic knowledge.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="quiz" class="content-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-teal-600">Test Your Knowledge: GATE-Style C Quiz</h2>
+                    <p class="max-w-3xl mx-auto text-lg text-slate-600 mt-2">Challenge yourself with questions similar to those found in GATE examinations, covering core C concepts. Pay attention to details!</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm p-6 max-w-2xl mx-auto">
+                    <div id="quiz-question-container">
+                        <h3 id="quiz-question" class="text-xl font-semibold text-slate-800 mb-4"></h3>
+                        <pre id="quiz-code-snippet" class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto my-4 hidden"></pre>
+                        <div id="quiz-options" class="space-y-3"></div>
+                        <div id="quiz-feedback" class="mt-4 text-center font-medium"></div>
+                        <button id="quiz-next-button" class="mt-6 w-full bg-teal-600 text-white py-3 rounded-md font-semibold hover:bg-teal-700 transition-colors duration-200" style="display: none;">Next Question</button>
+                        <button id="quiz-restart-button" class="mt-6 w-full bg-slate-500 text-white py-3 rounded-md font-semibold hover:bg-slate-600 transition-colors duration-200" style="display: none;">Restart Quiz</button>
+                    </div>
+                    <div id="quiz-result-container" class="text-center" style="display: none;">
+                        <h3 class="text-2xl font-bold text-teal-600 mb-4">Quiz Complete!</h3>
+                        <p id="quiz-score" class="text-xl text-slate-700 mb-6"></p>
+                        <button id="quiz-review-button" class="bg-blue-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200 mr-2">Review Answers</button>
+                        <button id="quiz-retake-button" class="bg-teal-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-teal-700 transition-colors duration-200">Retake Quiz</button>
+                        <div id="quiz-review-details" class="mt-8 space-y-6 text-left" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const syllabusData = [
+        {
+            category: "Fundamentals",
+            current: "History, Features, Structure, Keywords, Identifiers, Variables, Constants, Basic Data Types (`int`, `float`, `char`), I/O (`printf`, `scanf`).",
+            proposed: "Reinforce core concepts. Introduce `_Bool` keyword, `true`, `false` literals (from `<stdbool.h>`). Emphasize type safety and explicit type conversions.",
+            rationale: "C23 for modern boolean logic, improved readability, and type safety. The explicit `_Bool` type and `true`/`false` macros provide a clearer and safer way to handle boolean values, moving away from `0`/`1` integer representations. NEP 2020 for conceptual clarity and reducing ambiguity.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>C23's `_Bool` and `true`/`false`:</strong></p>
+                <p class="text-slate-600 mb-4">Before C23, C did not have a native boolean type. Programmers typically used integers (0 for false, non-zero for true). C99 introduced `_Bool` and the `<stdbool.h>` header to provide `bool`, `true`, and `false` as macros. C23 makes `_Bool` a fundamental keyword and `true`/`false` direct keywords, simplifying boolean operations and improving code readability.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>// Before C23 (C99 with &lt;stdbool.h&gt;)
+#include &lt;stdbool.h&gt;
+bool is_active = true;
+
+// C23
+_Bool is_valid = true; // _Bool is now a keyword
+if (is_valid) { /* ... */ }</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>NEP 2020's Impact:</strong></p>
+                <p class="text-slate-600">The emphasis on clarity and explicit types aligns with NEP 2020's focus on foundational literacy and conceptual understanding. By making boolean logic explicit, students can grasp control flow and conditional statements more intuitively, reducing common errors associated with implicit type conversions.</p>
+            `,
+            tags: ['C23', 'NEP']
+        },
+        {
+            category: "Operators & Expressions",
+            current: "Arithmetic, Relational, Logical, Bitwise, Assignment, Ternary, Increment/Decrement, Precedence.",
+            proposed: "Comprehensive coverage. No major changes, as this is foundational. Reinforce understanding of operator precedence and associativity through practical examples and potential pitfalls.",
+            rationale: "Foundational for all programming. Understanding operator behavior is critical for writing correct and efficient C code. While C23 doesn't introduce new operators in this category, the pedagogical approach emphasizes practical application and debugging.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>Emphasis on Precedence:</strong></p>
+                <p class="text-slate-600 mb-4">A common source of bugs in C is misunderstanding operator precedence. The revised syllabus will likely include more exercises focusing on complex expressions to solidify this understanding. For example, \`a + b * c\` vs. \`(a + b) * c\`.</p>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Bitwise Operators for Low-Level Programming:</strong></p>
+                <p class="text-slate-600">Given the industry relevance for embedded systems, the practical application of bitwise operators (e.g., for setting/clearing bits in registers, optimizing memory usage) will receive more attention, moving beyond just theoretical knowledge.</p>
+            `,
+            tags: []
+        },
+        {
+            category: "Control Flow",
+            current: "`if`, `if-else`, `switch`, `for`, `while`, `do-while`, `break`, `continue`, `goto`.",
+            proposed: "Comprehensive coverage. De-emphasize `goto` for general use, explain its limited utility (e.g., error handling, breaking out of deeply nested loops) but strongly advise against its overuse due to readability and maintainability issues. Promote structured programming practices.",
+            rationale: "Foundational for algorithmic control. NEP 2020 emphasizes structured programming and problem-solving, which `goto` can hinder. While `goto` has niche uses in systems programming, its general avoidance promotes cleaner, more readable, and maintainable code, aligning with modern software engineering practices.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>The \`goto\` Statement: A Necessary Evil?</strong></p>
+                <p class="text-slate-600 mb-4">The \`goto\` statement allows unconditional jumps within a function. While powerful, it can lead to 'spaghetti code' that is hard to follow and debug. The new syllabus will present \`goto\` as a tool for specific, limited scenarios like centralized error handling in functions or exiting multiple nested loops, but strongly advocates for alternatives like structured loops, functions, and flags for most control flow needs.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>// Example of limited \`goto\` use for error handling
+int process_data(int* data, int size) {
+    if (data == NULL) goto error_exit;
+    // ... process data ...
+    if (some_condition_fails) goto error_exit;
+    // ... more processing ...
+    return 0; // Success
+error_exit:
+    // Clean up resources
+    return -1; // Error
+}</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>NEP 2020 and Structured Programming:</strong></p>
+                <p class="text-slate-600">NEP 2020's focus on critical thinking and problem-solving is directly supported by promoting structured control flow. Students learn to break down problems into logical, manageable blocks, leading to more robust and understandable solutions.</p>
+            `,
+            tags: ['NEP']
+        },
+        {
+            category: "Functions & Recursion",
+            current: "Definition, Declaration/Prototyping, Calling, Parameter Passing (call by value/reference), Scope, Recursion.",
+            proposed: "Deep dive into modular programming. Explicitly remove and teach against K&R function definitions (e.g., `int func(a, b) int a; int b; { ... }`). Emphasize function prototypes for type checking and better compilation. Introduce `[[noreturn]]` attribute.",
+            rationale: "Foundational for modularity, reusability. C23 removes K&R definitions, making modern prototypes mandatory. The `[[noreturn]]` attribute improves static analysis and compiler optimizations by indicating functions that do not return, useful for error handling or program termination functions.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>Demise of K&R Function Definitions:</strong></p>
+                <p class="text-slate-600 mb-4">The original C standard (K&R C) allowed function definitions without explicit parameter types in the function header, like \`int add(a, b) int a, b; { ... }\`. This was error-prone as compilers couldn't check argument types during calls. C23 officially removes this archaic syntax, reinforcing the need for modern function prototypes (e.g., \`int add(int a, int b);\`) for type safety and clarity.</p>
+                <p class="text-slate-700 mt-4 mb-2"><strong>The \`[[noreturn]]\` Attribute (C23):</strong></p>
+                <p class="text-slate-600 mb-4">This attribute (from \`<stdnoreturn.h>\`) informs the compiler that a function will not return to its caller. This is useful for functions like \`exit()\`, \`abort()\`, or custom error handlers that terminate the program or throw exceptions in a C++ interop context. It helps compilers optimize code and detect potential issues where a return path is expected but not provided.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>#include &lt;stdnoreturn.h&gt;
+[[noreturn]] void fatal_error(const char* msg) {
+    fprintf(stderr, "Fatal Error: %s\\n", msg);
+    exit(EXIT_FAILURE);
+}
+
+void process_file(const char* filename) {
+    if (filename == NULL) {
+        fatal_error("Filename cannot be NULL");
+    }
+    // ... rest of the function
+}</code></pre>
+            `,
+            tags: ['C23', 'Industry']
+        },
+        {
+            category: "Arrays & Strings",
+            current: "1D/Multi-D arrays, Declaration, Initialization. C strings, Standard library functions (`strlen`, `strcpy`, etc.).",
+            proposed: "Thorough coverage, including practical string manipulation problems and memory considerations. Introduce `u8` prefix for UTF-8 literals and string literals, `z` for size_t suffix, and `DFP` for decimal floating-point literals. Emphasize safe string handling functions (e.g., `strncpy`, `snprintf`) and avoiding buffer overflows.",
+            rationale: "Foundational data structures. Industry relevance for text processing and data handling. C23 adds `u8` for modern character encoding, `z` for size_t, and `DFP` for specific numeric types, improving internationalization and precision. Emphasis on safe functions addresses common security vulnerabilities.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>UTF-8 Literals (\`u8\` prefix) in C23:</strong></p>
+                <p class="text-slate-600 mb-4">C23 introduces the \`u8\` prefix for string literals, indicating they are encoded in UTF-8. This is crucial for handling international characters correctly, as UTF-8 is the dominant encoding on the web and in many modern systems.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>const char* greeting = u8"Hello, World! 👋"; // UTF-8 string literal</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Safe String Handling:</strong></p>
+                <p class="text-slate-600">The syllabus will strongly advocate for using safer string functions that prevent buffer overflows, a common source of security vulnerabilities. Functions like \`strcpy\` are inherently unsafe. Students will learn to use \`strncpy\` (with care), \`strlcpy\` (if available), and \`snprintf\` for controlled string copying and formatting.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>// Unsafe: char dest[10]; strcpy(dest, "A very long string"); // Buffer overflow!
+// Safer:
+char dest[10];
+strncpy(dest, "A very long string", sizeof(dest) - 1);
+dest[sizeof(dest) - 1] = '\\0'; // Ensure null termination</code></pre>
+            `,
+            tags: ['C23', 'Industry']
+        },
+        {
+            category: "Pointers & Memory",
+            current: "Introduction, Declaration, Operations (arithmetic), Pointers with arrays/functions/DMA (`malloc`, `free`), Void/Null/Dangling pointers.",
+            proposed: "Emphasize `nullptr` as the modern null pointer constant. Strengthen best practices for memory management: avoiding leaks, buffer overflows, use-after-free errors. Introduce `memalignment()` from `<stdalign.h>` for aligned memory allocation and `aligned_alloc()` for dynamically allocated aligned memory. Discuss pointer provenance and strict aliasing rules.",
+            rationale: "Critical for systems programming, data structures, and cybersecurity. C23 introduces `nullptr` for type safety, and `memalignment()`/`aligned_alloc()` for modern memory alignment requirements (e.g., for SIMD instructions, hardware interfaces). Understanding pointer provenance and aliasing is crucial for writing correct and optimized C code.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>\`nullptr\` in C23:</strong></p>
+                <p class="text-slate-600 mb-4">Similar to C++, C23 introduces \`nullptr\` as a type-safe null pointer constant. Unlike \`NULL\` (which is typically \`(void*)0\` or \`0\`), \`nullptr\` has its own distinct type (\`nullptr_t\`), preventing common errors where \`NULL\` might be ambiguously interpreted as an integer. This improves type safety and makes code clearer.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>// Before C23
+int *ptr = NULL;
+// C23
+int *ptr = nullptr; // Type-safe null pointer</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Memory Alignment (\`memalignment()\`, \`aligned_alloc()\`):</strong></p>
+                <p class="text-slate-600 mb-4">Modern hardware often requires data to be aligned in memory for optimal performance (e.g., for SIMD instructions or specific hardware interfaces). C23 introduces \`memalignment()\` (from \`<stdalign.h>\`) to query the alignment of a type and \`aligned_alloc()\` for allocating memory with a specified alignment. This is crucial for high-performance and low-level programming.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>#include &lt;stdlib.h&gt; // For aligned_alloc
+#include &lt;stdalign.h&gt; // For memalignment
+
+struct MyAlignedData {
+    alignas(32) int data[8]; // Example of static alignment
+};
+
+int main() {
+    int* aligned_ptr = (int*)aligned_alloc(32, 10 * sizeof(int));
+    if (aligned_ptr == NULL) { /* handle error */ }
+    printf("Alignment of int: %zu\\n", memalignment(int));
+    free(aligned_ptr);
+    return 0;
+}</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Pointer Provenance:</strong></p>
+                <p class="text-slate-600">This concept, clarified in C23, helps define what memory a pointer is "allowed" to access. It's crucial for understanding how compilers optimize code and how certain pointer manipulations (e.g., converting an integer to a pointer and back) can lead to undefined behavior if the provenance is lost or violated. This deepens understanding of low-level memory safety.</p>
+            `,
+            tags: ['C23', 'Industry']
+        },
+        {
+            category: "User-Defined Types",
+            current: "Structures, Unions, `enum`, `typedef`, Bit fields.",
+            proposed: "Comprehensive coverage, including nested/self-referential structures (for linked lists, trees). Promote zero initialization with `{}` for aggregates and `static` storage duration objects. Introduce `_Static_assert` (renamed to `static_assert` in C23) for compile-time assertions and flexible array members (FAMs) in structures.",
+            rationale: "Essential for complex data modeling. C23 promotes `{}` initialization for consistency and safety. `static_assert` enables robust compile-time validation, catching errors early. FAMs provide a standard way to implement variable-length structures, common in network packets or file formats.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>\`static_assert\` (C23):</strong></p>
+                <p class="text-slate-600 mb-4">C11 introduced \`_Static_assert\`, which C23 renames to \`static_assert\` (from \`<assert.h>\`). This allows you to check conditions at compile time, providing a powerful way to enforce constraints on types, sizes, or other compile-time properties. If the condition is false, compilation fails with a custom message.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>#include &lt;assert.h&gt;
+
+// Ensure int is at least 4 bytes
+static_assert(sizeof(int) >= 4, "int must be at least 4 bytes");
+
+struct Packet {
+    unsigned char header;
+    // Flexible array member (must be last member)
+    unsigned char data[];
+};
+
+static_assert(sizeof(struct Packet) == 1, "Packet size without data should be 1 byte");</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Flexible Array Members (FAMs):</strong></p>
+                <p class="text-slate-600">FAMs allow the last member of a structure to be an unsized array (e.g., \`char data[];\`). This is used to create structures that can hold a variable amount of data at the end, typically allocated dynamically. It's a standard and safe alternative to older, non-standard techniques for variable-length arrays within structures.</p>
+            `,
+            tags: ['C23']
+        },
+        {
+            category: "File Handling",
+            current: "Concepts, Streams (text, binary), Opening/Closing, I/O functions (`fprintf`, `fscanf`, `fread`, `fwrite`), Error handling (`feof`, `ferror`).",
+            proposed: "Focus on practical file operations and robust error checking. Emphasize binary file I/O for data serialization. Introduce `fopen_s` (if available, for security-enhanced versions) and discuss secure file handling practices. Introduce `fmemopen` and `open_memstream` for in-memory file streams.",
+            rationale: "Essential for persistent data storage in applications. Industry relevance for data processing. C23's `fmemopen` and `open_memstream` allow treating memory buffers as files, simplifying certain data processing tasks without needing temporary files.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>In-Memory File Streams (\`fmemopen\`, \`open_memstream\`):</strong></p>
+                <p class="text-slate-600 mb-4">C23 (and POSIX before it) introduces functions like \`fmemopen\` and \`open_memstream\` that allow you to perform standard file I/O operations directly on a memory buffer. This is incredibly useful for parsing data from memory, generating reports in memory, or handling temporary data without the overhead of disk I/O.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    char buffer[100];
+    FILE *mem_file = fmemopen(buffer, sizeof(buffer), "w+");
+    if (mem_file == NULL) return 1;
+
+    fprintf(mem_file, "Hello from memory!");
+    fseek(mem_file, 0, SEEK_SET); // Rewind to read
+    char read_buf[100];
+    fgets(read_buf, sizeof(read_buf), mem_file);
+    printf("Read from memory: %s\\n", read_buf);
+
+    fclose(mem_file);
+    return 0;
+}</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Robust Error Handling:</strong></p>
+                <p class="text-slate-600">Beyond just checking \`NULL\` for \`fopen\`, the syllabus will emphasize checking return values of all file I/O functions and using \`feof()\` and \`ferror()\` to distinguish between end-of-file and actual I/O errors. This is crucial for writing reliable applications that interact with the file system.</p>
+            `,
+            tags: ['C23', 'Industry']
+        },
+        {
+            category: "Preprocessor",
+            current: "`#include`, `#define`, Conditional compilation (`#ifdef`, `#ifndef`, `#else`, `#endif`, `#elif`).",
+            proposed: "Introduce C23's `#warning`, `#elifdef`, `#elifndef`, `__has_include` macro, and the significant `#embed` directive. Discuss best practices for header guards and macro hygiene.",
+            rationale: "C23 for enhanced diagnostics and robust build systems. `#embed` is a powerful new feature for directly embedding binary resources into executables, essential for embedded systems, game development, or self-contained applications. `__has_include` allows for more flexible conditional compilation based on header availability.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>The \`#embed\` Directive (C23):</strong></p>
+                <p class="text-slate-600 mb-4">This is one of the most anticipated features of C23. \`#embed\` allows you to directly embed the contents of a binary file into your compiled program as an array of \`unsigned char\`. This is incredibly useful for including images, fonts, audio files, configuration data, or firmware blobs directly into your executable, making it self-contained.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>// Assuming 'image.png' exists in the same directory
+const unsigned char my_image[] = {
+    #embed "image.png"
+};
+const size_t my_image_size = sizeof(my_image);
+
+// Now 'my_image' array contains the raw bytes of 'image.png'</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>\`#warning\`, \`#elifdef\`, \`#elifndef\` (C23):</strong></p>
+                <p class="text-slate-600 mb-4">\`#warning\` allows the compiler to emit a warning message during preprocessing, useful for indicating deprecated features or build configuration issues. \`#elifdef\` and \`#elifndef\` are convenient new forms of conditional compilation, combining \`#elif\` with \`#ifdef\` and \`#ifndef\` respectively, for cleaner preprocessor logic.</p>
+                <p class="text-slate-700 mt-4 mb-2"><strong>\`__has_include\` (C23):</strong></p>
+                <p class="text-slate-600">This preprocessor macro checks if a specified header file exists and can be included. This allows for more portable code that can adapt to different build environments or feature sets, for example, conditionally including platform-specific headers.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>#if __has_include(&lt;optional_header.h&gt;)
+#include &lt;optional_header.h&gt;
+#else
+// Provide a fallback or warning
+#warning "optional_header.h not found, using fallback functionality."
+#endif</code></pre>
+            `,
+            tags: ['C23']
+        },
+        {
+            category: "Problem Solving",
+            current: "Flowcharts, Pseudocode, Algorithms. Basic Data Structures (Arrays, Linked Lists, Stacks, Queues), Searching, Sorting.",
+            proposed: "**Enhanced Focus:** Dedicated module on implementing fundamental data structures and algorithms using C. Introduce basic time/space complexity (Big O notation). Emphasize debugging techniques and tools. Integrate practical problem-solving scenarios from competitive programming and real-world applications.",
+            rationale: "NEP 2020 for problem-solving and critical thinking, moving beyond theoretical knowledge to practical application. High weightage in competitive exams like GATE and essential for industry roles in software development and systems programming. Debugging is a crucial skill often overlooked.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>NEP 2020 and Competency-Based Learning:</strong></p>
+                <p class="text-slate-600 mb-4">The NEP 2020 policy strongly advocates for shifting from rote learning to competency-based education. For C, this means less emphasis on memorizing syntax and more on applying concepts to solve problems. Students will be expected to design, implement, and debug solutions for a variety of problems, not just write code snippets.</p>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Debugging as a Core Skill:</strong></p>
+                <p class="text-slate-600 mb-4">Debugging is often learned implicitly. The revised syllabus will explicitly teach debugging methodologies and the use of tools like GDB. Understanding how to use breakpoints, step through code, inspect variables, and analyze call stacks is fundamental for developing robust software.</p>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Introduction to Big O Notation:</strong></p>
+                <p class="text-slate-600">While not a C-specific concept, understanding the efficiency of algorithms (time and space complexity using Big O notation) is crucial for writing performant code. This will be introduced in the context of data structures and algorithms implemented in C, preparing students for more advanced computer science topics.</p>
+            `,
+            tags: ['NEP', 'Industry']
+        },
+        {
+            category: "Modern C Concepts",
+            current: "(Limited in current introductory courses).",
+            proposed: "Introduce `static_assert` (renamed from `_Static_assert` in C23) for compile-time checks, attributes like `[[deprecated]]`, `[[fallthrough]]`, `[[nodiscard]]`, and selected `<stdbit.h>` functions for bit manipulation. Discuss the concept of `auto` type inference for object declarations and its use cases.",
+            rationale: "C23 for modern practices, improved code quality, and C++ compatibility. Attributes provide standardized ways for compilers to give warnings or optimize code, improving code quality and maintainability. `<stdbit.h>` offers efficient bit manipulation routines. `auto` simplifies variable declarations while maintaining type safety.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>Standardized Attributes (C23):</strong></p>
+                <p class="text-slate-600 mb-4">C23 adopts a C++-like attribute syntax \`[[attribute]]\` for standard attributes. These provide hints to the compiler or static analysis tools without changing the program's semantics. Key attributes include:</p>
+                <ul class="list-disc list-inside space-y-1 text-slate-600 mb-4">
+                    <li>\`[[deprecated]]\`: Marks a function, variable, or type as deprecated, prompting a compiler warning if used.</li>
+                    <li>\`[[fallthrough]]\`: Indicates intentional fallthrough in \`switch\` statements, suppressing compiler warnings for missing \`break\`.</li>
+                    <li>\`[[nodiscard]]\`: Warns if the return value of a function is ignored, useful for functions whose return value indicates success/failure or important data.</li>
+                </ul>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>[[deprecated("Use new_function() instead")]]
+void old_function() { /* ... */ }
+
+int main() {
+    old_function(); // Compiler will warn about deprecated function
+    return 0;
+}</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>\`auto\` Type Inference (C23):</strong></p>
+                <p class="text-slate-600 mb-4">C23 introduces \`auto\` for type inference for object declarations, similar to C++. The type of the variable is deduced from its initializer. This can make code more concise, especially with complex type names, but requires careful use to maintain readability.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>// Before C23
+unsigned long long large_num = 12345ULL;
+// C23
+auto large_num = 12345ULL; // Type of large_num is deduced as unsigned long long</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Bit Manipulation (\`<stdbit.h>\`):</strong></p>
+                <p class="text-slate-600">The \`<stdbit.h>\` header in C23 provides standardized functions for common bit manipulation operations like counting leading/trailing zeros, population count (number of set bits), etc. These functions are often optimized by compilers to use hardware instructions, providing highly efficient bitwise operations, crucial for low-level and embedded programming.</p>
+            `,
+            tags: ['C23', 'Industry']
+        },
+        {
+            category: "Obsolete Features",
+            current: "(Often not explicitly mentioned as obsolete, or implicitly avoided).",
+            proposed: "**Explicit Removal & Teaching Against:** Clearly identify and teach against the use of Trigraphs, K&R function definitions, implicit `int` declarations, and non-two's complement integers. Explain *why* these features are removed (e.g., security, clarity, portability, modern practices).",
+            rationale: "C23 removes these features to modernize the language, improve safety, portability, and reduce ambiguity. Teaching against them ensures students adopt modern C practices and avoid common pitfalls and outdated constructs that are no longer supported or considered good practice.",
+            deepDive: `
+                <p class="text-slate-700 mb-2"><strong>Trigraphs: A Relic of the Past:</strong></p>
+                <p class="text-slate-600 mb-4">Trigraphs were sequences of three characters (e.g., \`??=\` for \`#\`) used to represent certain characters not available on all keyboards in the early days of C. They caused confusion and bugs (e.g., \`??/\` for \`\\\`). C23 officially removes them, simplifying parsing and preventing unintended interpretations.</p>
+                <pre class="bg-slate-100 p-3 rounded-md text-sm overflow-x-auto"><code>// Old C code with trigraphs (now removed in C23)
+// \`??=\` is '#'
+// \`??/\` is '\\'
+// \`??'\` is '^'
+// \`??(\` is '['
+// \`??)\` is ']'
+// \`??!\` is '|'
+// \`??<\` is '{'
+// \`??>\` is '}'
+// \`??-\` is '~'
+</code></pre>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Implicit \`int\` Declarations:</strong></p>
+                <p class="text-slate-600 mb-4">In older C, if a type was omitted in a declaration, it implicitly defaulted to \`int\`. For example, \`static x;\` would declare \`x\` as \`static int x;\`. This led to ambiguity and potential errors. C23 removes this implicit \`int\` rule, making all type declarations explicit and improving code clarity and safety.</p>
+                <p class="text-slate-700 mt-4 mb-2"><strong>Non-Two's Complement Integers:</strong></p>
+                <p class="text-slate-600">While two's complement has been the dominant representation for signed integers for decades, C standards historically allowed other representations (one's complement, sign-magnitude). C23 mandates two's complement for signed integers, simplifying integer arithmetic and ensuring consistent behavior across platforms, crucial for portability.</p>
+            `,
+            tags: ['C23']
+        }
+    ];
+
+    const quizData = [
+        {
+            question: "Consider the following C code snippet:\n\n```c\n#include <stdio.h>\n\nint main() {\n    int arr[] = {10, 20, 30, 40, 50};\n    int *ptr = arr;\n    printf(\"%d \", *(ptr + 3));\n    printf(\"%d\\n\", ptr[1]);\n    return 0;\n}\n```\n\nWhat will be the output of the program?",
+            codeSnippet: `#include <stdio.h>\n\nint main() {\n    int arr[] = {10, 20, 30, 40, 50};\n    int *ptr = arr;\n    printf("%d ", *(ptr + 3));\n    printf("%d\\n", ptr[1]);\n    return 0;\n}`,
+            options: ["40 20", "30 10", "40 10", "20 40"],
+            correctAnswerIndex: 0,
+            explanation: "`*(ptr + 3)` is equivalent to `arr[3]`, which is 40. `ptr[1]` is equivalent to `*(ptr + 1)` or `arr[1]`, which is 20. So the output is `40 20`."
+        },
+        {
+            question: "What is the output of the following C code?\n\n```c\n#include <stdio.h>\n\nint main() {\n    int x = 5;\n    printf(\"%d %d %d\\n\", x++, ++x, x);\n    return 0;\n}\n```",
+            codeSnippet: `#include <stdio.h>\n\nint main() {\n    int x = 5;\n    printf("%d %d %d\\n", x++, ++x, x);\n    return 0;\n}`,
+            options: ["5 7 7", "6 7 7", "7 7 7", "Undefined behavior"],
+            correctAnswerIndex: 3,
+            explanation: "The order of evaluation of arguments to `printf` is undefined in C. This means `x++`, `++x`, and `x` could be evaluated in any order, leading to different outputs depending on the compiler and platform. Hence, it's undefined behavior."
+        },
+        {
+            question: "Consider the following C program:\n\n```c\n#include <stdio.h>\n\nvoid func(int *p) {\n    *p = 20;\n}\n\nint main() {\n    int a = 10;\n    func(&a);\n    printf(\"%d\\n\", a);\n    return 0;\n}\n```\n\nWhat will be the value of `a` printed in `main()`?",
+            codeSnippet: `#include <stdio.h>\n\nvoid func(int *p) {\n    *p = 20;\n}\n\nint main() {\n    int a = 10;\n    func(&a);\n    printf("%d\\n", a);\n    return 0;\n}`,
+            options: ["10", "20", "Garbage value", "Compilation error"],
+            correctAnswerIndex: 1,
+            explanation: "The function `func` takes a pointer to an integer. `&a` passes the address of `a` to `func`. Inside `func`, `*p = 20;` dereferences the pointer `p` (which points to `a`) and assigns 20 to the memory location pointed to by `p`. Thus, `a` in `main` becomes 20."
+        },
+        {
+            question: "Which of the following statements about `malloc()` and `calloc()` in C is FALSE?",
+            options: [
+                "`malloc()` allocates a block of uninitialized memory.",
+                "`calloc()` initializes the allocated memory to zero.",
+                "Both return `void*` on success.",
+                "`calloc()` takes a single argument for the total size."
+            ],
+            correctAnswerIndex: 3,
+            explanation: "`calloc()` takes two arguments: the number of elements and the size of each element (`calloc(num_elements, element_size)`). `malloc()` takes a single argument for the total size (`malloc(total_size)`)."
+        },
+        {
+            question: "What is the output of the following C code snippet?\n\n```c\n#include <stdio.h>\n\nint main() {\n    int i = 0;\n    for (i = 0; i < 5; i++) {\n        if (i == 3) {\n            continue;\n        }\n        printf(\"%d \", i);\n    }\n    return 0;\n}\n```",
+            codeSnippet: `#include <stdio.h>\n\nint main() {\n    int i = 0;\n    for (i = 0; i < 5; i++) {\n        if (i == 3) {\n            continue;\n        }\n        printf("%d ", i);\n    }\n    return 0;\n}`,
+            options: ["0 1 2 3 4 ", "0 1 2 4 ", "0 1 2 ", "3 4 "],
+            correctAnswerIndex: 1,
+            explanation: "The `continue` statement skips the rest of the current iteration and proceeds to the next iteration of the loop. When `i` is 3, `continue` is executed, so `printf(\"%d \", i);` is skipped for `i=3`. Thus, 3 is not printed."
+        },
+        {
+            question: "Which of the following is NOT a storage class specifier in C?",
+            options: ["auto", "register", "static", "global"],
+            correctAnswerIndex: 3,
+            explanation: "`auto`, `register`, `static`, and `extern` are the storage class specifiers in C. `global` is not a storage class specifier; global variables are typically declared outside any function and have `extern` linkage by default."
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let selectedAnswerIndex = -1; // -1 means no answer selected
+    let quizAnswers = []; // To store user's answers for review
+
+    const navButtons = document.querySelectorAll('.nav-button');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const target = button.dataset.target;
+
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            contentSections.forEach(section => {
+                if (section.id === target) {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+
+            // Specific logic for quiz section activation
+            if (target === 'quiz') {
+                startQuiz();
+            }
+        });
+    });
+
+    const accordionToggles = document.querySelectorAll('.accordion-toggle');
+    accordionToggles.forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const content = toggle.nextElementSibling;
+            const icon = toggle.querySelector('.accordion-icon');
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        });
+    });
+
+    const nepCtx = document.getElementById('nepChart')?.getContext('2d');
+    if (nepCtx) {
+        new Chart(nepCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Practical Application & Problem Solving', 'Skill Development', 'Theory & Syntax'],
+                datasets: [{
+                    label: 'Pedagogical Focus Shift',
+                    data: [50, 30, 20],
+                    backgroundColor: [
+                        '#0d9488',
+                        '#f59e0b',
+                        '#64748b'
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'NEP 2020: Focus Shift in Pedagogy',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        color: '#334155',
+                        padding: {
+                            top: 10,
+                            bottom: 20
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const topicsListContainer = document.getElementById('syllabus-topics-list').querySelector('ul');
+    const detailsContainer = document.getElementById('syllabus-details');
+
+    function renderTopicsList() {
+        topicsListContainer.innerHTML = ''; // Clear existing list
+        syllabusData.forEach((topic, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<button data-index="${index}" class="syllabus-item w-full text-left px-4 py-2 rounded-md hover:bg-teal-50 border-l-4 border-transparent transition-colors duration-200">${topic.category}</button>`;
+            topicsListContainer.appendChild(li);
+        });
+    }
+
+    function displaySyllabusDetails(index) {
+        const topic = syllabusData[index];
+        const tagsHtml = topic.tags.map(tag => {
+            if (tag === 'C23') return '<span class="syll-tag tag-c23">C23</span>';
+            if (tag === 'NEP') return '<span class="syll-tag tag-nep">NEP 2020</span>';
+            if (tag === 'Industry') return '<span class="syll-tag tag-industry">Industry</span>';
+            return '';
+        }).join('');
+
+        detailsContainer.innerHTML = `
+            <h3 class="text-2xl font-bold text-teal-600 mb-4">${topic.category}</h3>
+            <div class="space-y-6">
+                <div>
+                    <h4 class="font-semibold text-lg text-slate-700 mb-2">Current Syllabus Focus</h4>
+                    <p class="text-slate-600 bg-slate-100 p-3 rounded-md">${topic.current}</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-green-700 mb-2">Proposed Revision for 2026</h4>
+                    <p class="text-green-800 bg-green-50 p-3 rounded-md">${topic.proposed}</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700 mb-2">Rationale & Drivers</h4>
+                    <div class="bg-blue-50 p-3 rounded-md">
+                        <p class="text-blue-800 mb-3">${topic.rationale}</p>
+                        <div class="flex items-center flex-wrap">${tagsHtml}</div>
+                    </div>
+                </div>
+                <div class="border-t border-slate-200 pt-6">
+                    <h4 class="font-semibold text-lg text-indigo-700 mb-2">Deep Dive into Changes</h4>
+                    <div class="bg-indigo-50 p-3 rounded-md text-slate-700">
+                        ${topic.deepDive}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    topicsListContainer.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const index = e.target.dataset.index;
+            
+            document.querySelectorAll('.syllabus-item').forEach(item => item.classList.remove('active'));
+            e.target.classList.add('active');
+
+            displaySyllabusDetails(index);
+        }
+    });
+
+    renderTopicsList();
+    if (topicsListContainer.querySelector('button')) {
+        topicsListContainer.querySelector('button').click();
+    }
+
+    // Quiz Logic
+    const quizQuestionEl = document.getElementById('quiz-question');
+    const quizCodeSnippetEl = document.getElementById('quiz-code-snippet');
+    const quizOptionsEl = document.getElementById('quiz-options');
+    const quizFeedbackEl = document.getElementById('quiz-feedback');
+    const quizNextButton = document.getElementById('quiz-next-button');
+    const quizRestartButton = document.getElementById('quiz-restart-button');
+    const quizResultContainer = document.getElementById('quiz-result-container');
+    const quizQuestionContainer = document.getElementById('quiz-question-container');
+    const quizScoreEl = document.getElementById('quiz-score');
+    const quizReviewButton = document.getElementById('quiz-review-button');
+    const quizRetakeButton = document.getElementById('quiz-retake-button');
+    const quizReviewDetailsEl = document.getElementById('quiz-review-details');
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        quizAnswers = [];
+        quizResultContainer.style.display = 'none';
+        quizQuestionContainer.style.display = 'block';
+        quizRestartButton.style.display = 'none';
+        quizReviewDetailsEl.style.display = 'none';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        selectedAnswerIndex = -1;
+        quizFeedbackEl.textContent = '';
+        quizNextButton.style.display = 'none';
+        quizOptionsEl.innerHTML = '';
+        quizCodeSnippetEl.textContent = '';
+        quizCodeSnippetEl.style.display = 'none';
+
+
+        if (currentQuestionIndex < quizData.length) {
+            const question = quizData[currentQuestionIndex];
+            quizQuestionEl.textContent = `Q${currentQuestionIndex + 1}: ${question.question}`;
+            if (question.codeSnippet) {
+                quizCodeSnippetEl.textContent = question.codeSnippet;
+                quizCodeSnippetEl.style.display = 'block';
+            }
+
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.dataset.index = index;
+                button.classList.add('quiz-option', 'w-full', 'text-left', 'p-3', 'rounded-md', 'border', 'border-slate-200', 'text-slate-700');
+                button.addEventListener('click', () => selectAnswer(index));
+                quizOptionsEl.appendChild(button);
+            });
+        } else {
+            showResult();
+        }
+    }
+
+    function selectAnswer(index) {
+        if (selectedAnswerIndex !== -1) return; // Already selected
+
+        selectedAnswerIndex = index;
+        const options = quizOptionsEl.querySelectorAll('.quiz-option');
+        options.forEach((btn, idx) => {
+            if (idx === index) {
+                btn.classList.add('selected');
+            }
+        });
+
+        const question = quizData[currentQuestionIndex];
+        const isCorrect = (selectedAnswerIndex === question.correctAnswerIndex);
+        
+        quizAnswers.push({
+            question: question.question,
+            codeSnippet: question.codeSnippet,
+            selected: question.options[selectedAnswerIndex],
+            correct: question.options[question.correctAnswerIndex],
+            isCorrect: isCorrect,
+            explanation: question.explanation
+        });
+
+        if (isCorrect) {
+            score++;
+            quizFeedbackEl.textContent = 'Correct!';
+            quizFeedbackEl.classList.remove('text-red-600');
+            quizFeedbackEl.classList.add('text-green-600');
+        } else {
+            quizFeedbackEl.textContent = 'Incorrect. The correct answer is: ' + question.options[question.correctAnswerIndex];
+            quizFeedbackEl.classList.remove('text-green-600');
+            quizFeedbackEl.classList.add('text-red-600');
+        }
+
+        // Highlight correct/incorrect
+        options.forEach((btn, idx) => {
+            btn.classList.remove('selected'); // Remove selected state
+            if (idx === question.correctAnswerIndex) {
+                btn.classList.add('correct');
+            } else if (idx === selectedAnswerIndex) {
+                btn.classList.add('incorrect');
+            }
+            btn.disabled = true; // Disable all options after selection
+        });
+
+        quizNextButton.style.display = 'block';
+    }
+
+    function showResult() {
+        quizQuestionContainer.style.display = 'none';
+        quizResultContainer.style.display = 'block';
+        quizScoreEl.textContent = `You scored ${score} out of ${quizData.length} questions.`;
+        quizRestartButton.style.display = 'none'; // Ensure restart is hidden here
+    }
+
+    quizNextButton.addEventListener('click', () => {
+        currentQuestionIndex++;
+        loadQuestion();
+    });
+
+    quizRetakeButton.addEventListener('click', startQuiz);
+
+    quizReviewButton.addEventListener('click', () => {
+        quizReviewDetailsEl.innerHTML = '';
+        quizReviewDetailsEl.style.display = 'block';
+
+        quizAnswers.forEach((answer, index) => {
+            const reviewItem = document.createElement('div');
+            reviewItem.classList.add('p-4', 'rounded-md', answer.isCorrect ? 'bg-green-50' : 'bg-red-50', 'border', answer.isCorrect ? 'border-green-200' : 'border-red-200');
+            reviewItem.innerHTML = `
+                <p class="font-semibold text-lg mb-2">${index + 1}. ${answer.question}</p>
+                ${answer.codeSnippet ? `<pre class="bg-slate-100 p-2 rounded-md text-sm overflow-x-auto my-2"><code>${answer.codeSnippet}</code></pre>` : ''}
+                <p class="mb-1">Your answer: <span class="${answer.isCorrect ? 'text-green-700' : 'text-red-700'} font-medium">${answer.selected}</span></p>
+                <p class="mb-2">Correct answer: <span class="text-green-700 font-medium">${answer.correct}</span></p>
+                <p class="text-slate-600 text-sm">Explanation: ${answer.explanation}</p>
+            `;
+            quizReviewDetailsEl.appendChild(reviewItem);
+        });
+    });
+
+    // Initial load of quiz (hidden until clicked)
+    // No need to call startQuiz here, it's called when the nav button is clicked.
+});
+</script>
+
+</body>
+</html>
